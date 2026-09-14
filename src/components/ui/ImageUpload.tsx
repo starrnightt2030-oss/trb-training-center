@@ -35,9 +35,9 @@ export function ImageUpload({ label, hint, value, onChange, bucket = 'media', pr
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-[13.5px] font-semibold text-navy-800">{label}</span>
+        <span className="text-[13.5px] font-semibold text-ink">{label}</span>
         <button type="button" onClick={() => setManual((v) => !v)}
-          className="flex items-center gap-1 text-[12.5px] font-semibold text-navy-600 hover:text-navy-800">
+          className="flex items-center gap-1 text-[12.5px] font-semibold text-accent hover:text-ink">
           <Link2 className="h-3.5 w-3.5" aria-hidden /> {manual ? 'رفع ملف' : 'إدخال رابط'}
         </button>
       </div>
@@ -52,7 +52,7 @@ export function ImageUpload({ label, hint, value, onChange, bucket = 'media', pr
             <img src={value} alt="" className="h-20 w-20 shrink-0 rounded-xl border border-steel-200 object-cover" />
           )}
           <label className="flex flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-steel-300 bg-steel-50 px-4 py-4 transition hover:border-navy-400 hover:bg-navy-50/40">
-            {busy ? <Loader2 className="h-5 w-5 animate-spin text-navy-600" aria-hidden />
+            {busy ? <Loader2 className="h-5 w-5 animate-spin text-accent" aria-hidden />
                   : isPdf ? <Upload className="h-5 w-5 text-steel-500" aria-hidden />
                   : <ImagePlus className="h-5 w-5 text-steel-500" aria-hidden />}
             <span className="text-[13.5px] text-steel-600">

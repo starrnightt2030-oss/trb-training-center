@@ -1,10 +1,15 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { BookOpen, Download } from 'lucide-react';
+import { BookOpen, Download, FileText, Layers, Tag, User } from 'lucide-react';
+import clsx from 'clsx';
 import { PageHeader } from './PageHeader';
 import { PdfViewer } from '@/components/shared/PdfViewer';
+import { BookCard } from '@/components/shared/BookCard';
 import { EmptyState, ErrorState, LoadingBlock } from '@/components/ui/States';
-import { fetchBook, fetchGrades } from '@/data/api';
+import { Reveal } from '@/components/ui/Motion';
+import { bumpBookViews, fetchBook, fetchGrades, fetchRelatedBooks, fetchSpecializations } from '@/data/api';
+import { SUBJECT_KINDS } from '@/lib/constants';
 import { formatFileSize } from '@/lib/format';
 import { useSeo } from '@/hooks/useSeo';
 
@@ -12,40 +17,98 @@ export default function BookReader() {
   const { id = '' } = useParams();
   const book   = useQuery({ queryKey: ['book', id], queryFn: () => fetchBook(id), enabled: !!id });
   const grades = useQuery({ queryKey: ['grades'], queryFn: fetchGrades });
+  const specs  = useQuery({ queryKey: ['specializations'], queryFn: () => fetchSpecializations() });
+
+  const related = useQuery({
+    queryKey: ['books', 'related', id],
+    queryFn: () => fetchRelatedBooks(book.data!, 6),
+    enabled: !!book.data,
+    staleTime: 5 * 60_000,
+  });
 
   useSeo({ title: book.data?.title, description: book.data?.description ?? undefined });
 
+  // تسجيل فتح الكتاب مرة واحدة
+  useEffect(() => { if (book.data?.id) void bumpBookViews(book.data.id); }, [book.data?.id]);
+
   if (book.isLoading) return <LoadingBlock className="py-32" />;
-  if (book.error) return <div className="container-page py-20"><ErrorState error={book.error} onRetry={() => void book.refetch()} /></div>;
-  if (!book.data) return <div className="container-page py-20"><EmptyState title="الكتاب غير موجود" /></div>;
+  if (book.error) {
+    return <div className="container-page py-20"><ErrorState error={book.error} onRetry={() => void book.refetch()} /></div>;
+  }
+  if (!book.data) {
+    return <div className="container-page py-20"><EmptyState title="الكتاب غير موجود" description="ربما حُذف من المكتبة أو تغيّر رابطه." /></div>;
+  }
 
   const b = book.data;
   const grade = grades.data?.find((g) => g.id === b.grade_id);
+  const spec  = specs.data?.find((s) => s.id === b.specialization_id);
+  const kind  = SUBJECT_KINDS[b.kind ?? 'specialized'];
+
+  const meta = [
+    b.author && { icon: User, label: 'المؤلف / الجهة', value: b.author },
+    grade && { icon: Layers, label: 'الصف', value: grade.name },
+    spec && { icon: Tag, label: 'التخصص', value: spec.name },
+    b.edition && { icon: FileText, label: 'الطبعة', value: b.edition },
+    b.pages && { icon: FileText, label: 'عدد الصفحات', value: String(b.pages) },
+    b.file_size_kb && { icon: Download, label: 'حجم الملف', value: formatFileSize(b.file_size_kb) },
+  ].filter(Boolean) as Array<{ icon: typeof User; label: string; value: string }>;
 
   return (
     <>
       <PageHeader title={b.title} description={b.description ?? undefined}
         breadcrumb={[{ label: 'المكتبة الإلكترونية', to: '/library' }, { label: b.title }]}
         action={b.pdf_url && b.allow_download ? (
-          <a href={b.pdf_url} download target="_blank" rel="noopener noreferrer"
-             className="inline-flex h-11 items-center gap-2 rounded-xl bg-navy-700 px-5 text-[14px] font-semibold text-white hover:bg-navy-800">
+          <a href={b.pdf_url} download target="_blank" rel="noopener noreferrer" className="btn btn-md btn-gold">
             <Download className="h-4 w-4" aria-hidden /> تحميل PDF
           </a>
         ) : undefined} />
 
       <div className="container-page py-8">
-        <dl className="mb-6 flex flex-wrap gap-x-8 gap-y-2 text-[13.5px] text-steel-600">
-          {b.author && <div><dt className="inline font-semibold text-navy-800">المؤلف: </dt><dd className="inline">{b.author}</dd></div>}
-          {grade && <div><dt className="inline font-semibold text-navy-800">الصف: </dt><dd className="inline">{grade.name}</dd></div>}
-          {b.pages && <div><dt className="inline font-semibold text-navy-800">عدد الصفحات: </dt><dd className="inline">{b.pages}</dd></div>}
-          {b.file_size_kb && <div><dt className="inline font-semibold text-navy-800">حجم الملف: </dt><dd className="inline">{formatFileSize(b.file_size_kb)}</dd></div>}
-        </dl>
+        {/* شريط بيانات الكتاب */}
+        <div className="card mb-6 flex flex-wrap items-center gap-x-8 gap-y-3 p-4">
+          <span className={clsx('inline-flex items-center rounded-full border px-3 py-1 text-[12.5px] font-bold', kind.tone)}>
+            {kind.label}
+          </span>
+          {meta.map((m) => (
+            <span key={m.label} className="flex items-center gap-2 text-[13.5px]">
+              <m.icon className="h-4 w-4 text-muted" aria-hidden />
+              <span className="font-semibold text-ink-2">{m.label}:</span>
+              <span className="nums-latn text-muted">{m.value}</span>
+            </span>
+          ))}
+          {!b.allow_download && (
+            <span className="rounded-full border border-line-2 bg-surface-3 px-3 py-1 text-[12px] font-semibold text-muted">
+              قراءة داخل الموقع فقط
+            </span>
+          )}
+        </div>
 
         {b.pdf_url ? (
-          <PdfViewer url={b.pdf_url} title={b.title} allowDownload={b.allow_download} />
+          <PdfViewer url={b.pdf_url} title={b.title} allowDownload={b.allow_download} storageKey={b.id} />
         ) : (
           <EmptyState icon={<BookOpen className="h-7 w-7" />} title="لم يُرفع ملف الكتاب بعد"
-            description="يُرفع ملف PDF لهذا الكتاب من لوحة الإدارة." />
+            description="يُرفع ملف PDF لهذا الكتاب من لوحة الإدارة ▸ المكتبة الإلكترونية." />
+        )}
+
+        {b.keywords?.length > 0 && (
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="text-[12.5px] font-bold text-muted">كلمات مفتاحية:</span>
+            {b.keywords.map((k) => (
+              <span key={k} className="rounded-full border border-line-2 bg-surface-3 px-3 py-1 text-[12px] text-ink-2">{k}</span>
+            ))}
+          </div>
+        )}
+
+        {/* كتب ذات صلة */}
+        {(related.data?.length ?? 0) > 0 && (
+          <Reveal className="mt-16">
+            <h2 className="mb-5 text-[21px]">كتب ذات صلة</h2>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+              {related.data!.map((r) => (
+                <BookCard key={r.id} book={r} grade={grades.data?.find((g) => g.id === r.grade_id)} compact />
+              ))}
+            </div>
+          </Reveal>
         )}
       </div>
     </>

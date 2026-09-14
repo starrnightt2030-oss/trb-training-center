@@ -33,7 +33,7 @@ function Panel({ title, icon: Icon, children }: { title: string; icon: typeof St
   return (
     <section className="card p-7">
       <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-50 text-navy-700">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-50 text-accent">
           <Icon className="h-5 w-5" aria-hidden />
         </span>
         <h2 className="text-[18px]">{title}</h2>
@@ -113,7 +113,7 @@ export default function SpecializationDetail() {
                 return (
                   <div key={g.id} className="rounded-2xl border border-steel-200 bg-steel-50/60 p-5">
                     <h3 className="mb-4 flex items-center gap-2 text-[15.5px]">
-                      <GraduationCap className="h-[18px] w-[18px] text-navy-700" aria-hidden /> {g.name}
+                      <GraduationCap className="h-[18px] w-[18px] text-accent" aria-hidden /> {g.name}
                     </h3>
                     {own.length > 0 && (
                       <>
@@ -130,7 +130,7 @@ export default function SpecializationDetail() {
                         <p className="mb-2 text-[12px] font-bold uppercase tracking-wider text-steel-500">مواد مشتركة</p>
                         <ul className="flex flex-wrap gap-1.5">
                           {common.map((r) => (
-                            <li key={r.id} className="rounded-lg bg-white px-2.5 py-1 text-[12.5px] font-medium text-steel-700 ring-1 ring-steel-200">{r.name}</li>
+                            <li key={r.id} className="rounded-lg bg-surface px-2.5 py-1 text-[12.5px] font-medium text-steel-700 ring-1 ring-steel-200">{r.name}</li>
                           ))}
                         </ul>
                       </>
@@ -158,13 +158,13 @@ export default function SpecializationDetail() {
                     {p.focus && <p className="mb-4 text-[14px] leading-7 text-steel-600">{p.focus}</p>}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <p className="mb-2 text-[12.5px] font-bold text-navy-800">الجانب النظري</p>
+                        <p className="mb-2 text-[12.5px] font-bold text-ink">الجانب النظري</p>
                         <ul className="space-y-1.5 text-[13.5px] leading-6 text-steel-600">
                           {p.theory_topics?.map((t) => <li key={t}>• {t}</li>)}
                         </ul>
                       </div>
                       <div>
-                        <p className="mb-2 text-[12.5px] font-bold text-navy-800">الجانب العملي</p>
+                        <p className="mb-2 text-[12.5px] font-bold text-ink">الجانب العملي</p>
                         <ul className="space-y-1.5 text-[13.5px] leading-6 text-steel-600">
                           {p.practical_topics?.map((t) => <li key={t}>• {t}</li>)}
                         </ul>
@@ -200,7 +200,7 @@ export default function SpecializationDetail() {
                 <li key={h} className="rounded-lg bg-ember-50 px-3 py-1.5 text-[13px] font-semibold text-ember-800">{h}</li>
               ))}
             </ul>
-            <h3 className="mb-3 text-[14.5px] text-navy-800">مهمات الوقاية الإلزامية</h3>
+            <h3 className="mb-3 text-[14.5px] text-ink">مهمات الوقاية الإلزامية</h3>
             <ul className="flex flex-wrap gap-2">
               {s.safety_ppe?.map((h) => (
                 <li key={h} className="rounded-lg bg-emerald-50 px-3 py-1.5 text-[13px] font-semibold text-emerald-800">{h}</li>
@@ -225,7 +225,7 @@ export default function SpecializationDetail() {
                 return vid ? (
                   <div key={v.id}>
                     <YouTubeEmbed id={vid} title={v.title} thumbnail={v.thumbnail_url} />
-                    <h3 className="clamp-2 mt-2.5 text-[14px] font-bold text-navy-900">{v.title}</h3>
+                    <h3 className="clamp-2 mt-2.5 text-[14px] font-bold text-ink">{v.title}</h3>
                   </div>
                 ) : null;
               })}

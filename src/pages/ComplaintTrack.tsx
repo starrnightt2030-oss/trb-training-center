@@ -73,7 +73,7 @@ export default function ComplaintTrack() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-[12px] font-bold uppercase tracking-widest text-steel-500">الرقم المرجعي</p>
-                  <p className="mt-1 font-display text-[22px] font-bold text-navy-900" dir="ltr">{result.ticket_id}</p>
+                  <p className="mt-1 font-display text-[22px] font-bold text-ink" dir="ltr">{result.ticket_id}</p>
                 </div>
                 <span className={clsx('rounded-full border px-3.5 py-1.5 text-[13px] font-bold', COMPLAINT_STATUS[result.status].tone)}>
                   {COMPLAINT_STATUS[result.status].label}
@@ -83,8 +83,8 @@ export default function ComplaintTrack() {
 
             <div className="p-6">
               <dl className="grid gap-4 sm:grid-cols-2">
-                <div><dt className="text-[12.5px] font-bold text-steel-500">النوع</dt><dd className="mt-1 text-[15px] text-navy-900">{COMPLAINT_KINDS[result.kind]}</dd></div>
-                <div><dt className="text-[12.5px] font-bold text-steel-500">الموضوع</dt><dd className="mt-1 text-[15px] text-navy-900">{result.subject}</dd></div>
+                <div><dt className="text-[12.5px] font-bold text-steel-500">النوع</dt><dd className="mt-1 text-[15px] text-ink">{COMPLAINT_KINDS[result.kind]}</dd></div>
+                <div><dt className="text-[12.5px] font-bold text-steel-500">الموضوع</dt><dd className="mt-1 text-[15px] text-ink">{result.subject}</dd></div>
                 <div><dt className="text-[12.5px] font-bold text-steel-500">تاريخ التقديم</dt><dd className="mt-1 text-[14px] text-steel-700">{formatDateTime(result.created_at)}</dd></div>
                 {result.responded_at && <div><dt className="text-[12.5px] font-bold text-steel-500">تاريخ الرد</dt><dd className="mt-1 text-[14px] text-steel-700">{formatDateTime(result.responded_at)}</dd></div>}
                 {result.closed_at && <div><dt className="text-[12.5px] font-bold text-steel-500">تاريخ الإغلاق</dt><dd className="mt-1 text-[14px] text-steel-700">{formatDateTime(result.closed_at)}</dd></div>}
@@ -95,7 +95,7 @@ export default function ComplaintTrack() {
                 <ol className="mt-7 flex flex-wrap gap-2" aria-label="مراحل معالجة الطلب">
                   {COMPLAINT_FLOW.map((s, i) => (
                     <li key={s} className={clsx('flex-1 min-w-[92px] rounded-lg border px-2 py-2 text-center text-[12px] font-semibold',
-                      i <= stepIndex ? 'border-navy-700 bg-navy-700 text-white' : 'border-steel-200 bg-white text-steel-400')}>
+                      i <= stepIndex ? 'border-navy-700 bg-navy-700 text-white' : 'border-steel-200 bg-surface text-steel-400')}>
                       {COMPLAINT_STATUS[s].label}
                     </li>
                   ))}

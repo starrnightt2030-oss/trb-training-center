@@ -16,10 +16,10 @@ const icons = {
 } as const;
 
 const tones: Record<Tone, string> = {
-  success: 'border-emerald-200 bg-white text-emerald-700',
-  error:   'border-ember-200 bg-white text-ember-700',
-  info:    'border-navy-200 bg-white text-navy-700',
-  warning: 'border-brass-200 bg-white text-brass-700',
+  success: 'border-emerald-200 bg-surface text-emerald-700',
+  error:   'border-ember-200 bg-surface text-ember-700',
+  info:    'border-navy-200 bg-surface text-accent',
+  warning: 'border-brass-200 bg-surface text-brass-700',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {

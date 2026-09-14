@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 /** جدول متجاوب — يمرَّر أفقياً داخل حاويته ولا يكسر تخطيط الصفحة */
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-steel-200 bg-white">
+    <div className="overflow-x-auto rounded-2xl border border-steel-200 bg-surface">
       <table className={clsx('w-full min-w-[720px] border-collapse text-right text-[14px]', className)}>
         {children}
       </table>
@@ -23,7 +23,7 @@ export const Th = ({ children, className, ...rest }: CellProps) => (
 );
 
 export const Td = ({ children, className, ...rest }: CellProps) => (
-  <td {...rest} className={clsx('border-b border-steel-100 px-4 py-3 align-middle text-navy-800', className)}>{children}</td>
+  <td {...rest} className={clsx('border-b border-steel-100 px-4 py-3 align-middle text-ink', className)}>{children}</td>
 );
 
 export function Pagination({ page, pageSize, total, onChange }: {
@@ -38,11 +38,11 @@ export function Pagination({ page, pageSize, total, onChange }: {
       </p>
       <div className="flex gap-2">
         <button onClick={() => onChange(page - 1)} disabled={page <= 1} aria-label="الصفحة السابقة"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-steel-300 text-navy-700 disabled:opacity-40 hover:bg-steel-50">
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-steel-300 text-accent disabled:opacity-40 hover:bg-steel-50">
           <ChevronRight className="h-4 w-4" aria-hidden />
         </button>
         <button onClick={() => onChange(page + 1)} disabled={page >= pages} aria-label="الصفحة التالية"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-steel-300 text-navy-700 disabled:opacity-40 hover:bg-steel-50">
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-steel-300 text-accent disabled:opacity-40 hover:bg-steel-50">
           <ChevronLeft className="h-4 w-4" aria-hidden />
         </button>
       </div>

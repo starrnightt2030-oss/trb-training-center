@@ -33,7 +33,7 @@ export default function About() {
           { icon: Building2, title: 'نطاق الخدمة التعليمية', body: scope },
         ].map((c) => (
           <section key={c.title} className="card p-7">
-            <c.icon className="mb-4 h-7 w-7 text-navy-700" aria-hidden />
+            <c.icon className="mb-4 h-7 w-7 text-accent" aria-hidden />
             <h2 className="text-[18px]">{c.title}</h2>
             <p className="mt-3 text-[14.5px] leading-8 text-steel-600">{c.body || '—'}</p>
           </section>
@@ -46,12 +46,12 @@ export default function About() {
           <h2 className="text-[18px]">قيمنا</h2>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {values.map((v) => (
-              <li key={v} className="flex items-center gap-2.5 rounded-xl bg-steel-50 px-4 py-3 text-[14px] font-semibold text-navy-800">
+              <li key={v} className="flex items-center gap-2.5 rounded-xl bg-steel-50 px-4 py-3 text-[14px] font-semibold text-ink">
                 <span className="h-1.5 w-1.5 rounded-full bg-brass-500" aria-hidden />{v}
               </li>
             ))}
           </ul>
-          {isoNote && <p className="mt-5 rounded-xl bg-navy-50 px-4 py-3 text-[13.5px] leading-7 text-navy-800">{isoNote}</p>}
+          {isoNote && <p className="mt-5 rounded-xl bg-navy-50 px-4 py-3 text-[13.5px] leading-7 text-ink">{isoNote}</p>}
         </section>
 
         <section className="card p-7">
@@ -60,7 +60,7 @@ export default function About() {
           <ol className="mt-4 space-y-3">
             {goals.map((g, i) => (
               <li key={g} className="flex gap-3 text-[14px] leading-7 text-steel-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-navy-100 text-[12px] font-bold text-navy-800">{i + 1}</span>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-navy-100 text-[12px] font-bold text-ink">{i + 1}</span>
                 {g}
               </li>
             ))}
@@ -71,7 +71,7 @@ export default function About() {
       <div className="container-page pb-16">
         <section className="card overflow-hidden">
           <div className="flex items-center gap-3 border-b border-steel-200 bg-steel-50 px-7 py-4">
-            <Users2 className="h-6 w-6 text-navy-700" aria-hidden />
+            <Users2 className="h-6 w-6 text-accent" aria-hidden />
             <div>
               <h2 className="text-[18px]">إدارات المركز</h2>
               <p className="mt-0.5 text-[13px] text-steel-500">إلى أي إدارة تتوجّه عند كل حاجة</p>
@@ -79,7 +79,7 @@ export default function About() {
           </div>
           <ul className="grid gap-px bg-steel-200 sm:grid-cols-2 lg:grid-cols-3">
             {DEPARTMENTS.map((d) => (
-              <li key={d.name} className="bg-white p-6">
+              <li key={d.name} className="bg-surface p-6">
                 <h3 className="text-[15.5px] leading-snug">{d.name}</h3>
                 <p className="mt-2 text-[13.5px] leading-7 text-steel-600">{d.role}</p>
               </li>

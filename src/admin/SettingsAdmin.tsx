@@ -88,7 +88,7 @@ export default function SettingsAdmin() {
           {groups.map((g) => (
             <button key={g} onClick={() => setGroup(g)}
               className={clsx('whitespace-nowrap rounded-xl px-4 py-2.5 text-right text-[14px] font-semibold transition',
-                group === g ? 'bg-navy-700 text-white' : 'bg-white text-navy-800 hover:bg-steel-100 border border-steel-200')}>
+                group === g ? 'bg-navy-700 text-white' : 'bg-surface text-ink hover:bg-steel-100 border border-steel-200')}>
               {GROUP_LABELS[g] ?? g}
             </button>
           ))}

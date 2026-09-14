@@ -25,7 +25,7 @@ export function VideoCard({ video, onOpen }: { video: Video; onOpen: (v: Video) 
         )}
       </div>
       <div className="flex-1 p-4">
-        <h3 className="clamp-2 text-[15px] leading-snug text-navy-900">{video.title}</h3>
+        <h3 className="clamp-2 text-[15px] leading-snug text-ink">{video.title}</h3>
         {video.description && <p className="clamp-2 mt-1.5 text-[13px] leading-6 text-steel-600">{video.description}</p>}
       </div>
     </button>

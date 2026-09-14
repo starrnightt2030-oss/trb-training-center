@@ -3,8 +3,8 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes,
 import clsx from 'clsx';
 
 const control =
-  'w-full rounded-xl border border-steel-300 bg-white px-3.5 py-2.5 text-[15px] text-navy-900 ' +
-  'placeholder:text-steel-400 transition focus:border-navy-500 focus:ring-4 focus:ring-navy-500/10 ' +
+  'w-full rounded-xl border border-steel-300 bg-surface px-3.5 py-2.5 text-[15px] text-ink ' +
+  'placeholder:text-steel-400 transition focus:border-accent focus:ring-4 focus:ring-accent/10 ' +
   'disabled:bg-steel-100 disabled:text-steel-500';
 
 function Wrapper({ id, label, hint, error, required, children }: {
@@ -13,7 +13,7 @@ function Wrapper({ id, label, hint, error, required, children }: {
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={id} className="block text-[13.5px] font-semibold text-navy-800">
+        <label htmlFor={id} className="block text-[13.5px] font-semibold text-ink">
           {label}
           {required && <span className="text-ember-600" aria-hidden> *</span>}
         </label>
@@ -98,17 +98,17 @@ export function Switch({ label, hint, checked, onChange }: {
 }) {
   const id = useId();
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-steel-200 bg-white p-3.5">
+    <div className="flex items-start gap-3 rounded-xl border border-steel-200 bg-surface p-3.5">
       <button
         type="button" role="switch" aria-checked={checked} aria-labelledby={id}
         onClick={() => onChange(!checked)}
         className={clsx('mt-0.5 h-6 w-11 shrink-0 rounded-full transition', checked ? 'bg-navy-700' : 'bg-steel-300')}
       >
-        <span className={clsx('block h-5 w-5 rounded-full bg-white shadow transition-transform mx-0.5',
+        <span className={clsx('block h-5 w-5 rounded-full bg-surface shadow transition-transform mx-0.5',
           checked ? '-translate-x-[20px]' : 'translate-x-0')} />
       </button>
       <div className="min-w-0">
-        <span id={id} className="block text-[14px] font-semibold text-navy-800">{label}</span>
+        <span id={id} className="block text-[14px] font-semibold text-ink">{label}</span>
         {hint && <span className="block text-[12.5px] text-steel-500">{hint}</span>}
       </div>
     </div>

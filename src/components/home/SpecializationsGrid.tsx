@@ -7,7 +7,7 @@ import type { Specialization } from '@/types/db';
 export function SpecializationCard({ spec, compact }: { spec: Specialization; compact?: boolean }) {
   return (
     <Link to={`/specializations/${spec.slug}`}
-      className="card card-hover group flex flex-col overflow-hidden focus-visible:ring-4 focus-visible:ring-navy-500/20">
+      className="card card-hover group flex flex-col overflow-hidden focus-visible:ring-4 focus-visible:ring-accent/20">
       <div className="relative h-36 overflow-hidden bg-navy-900">
         {spec.cover_image_url ? (
           <img src={spec.cover_image_url} alt="" loading="lazy" decoding="async"
@@ -22,9 +22,9 @@ export function SpecializationCard({ spec, compact }: { spec: Specialization; co
       </div>
 
       <div className={clsx('flex flex-1 flex-col p-5 pt-10', compact && 'pb-4')}>
-        <h3 className="text-[17px] leading-snug text-navy-900">{spec.name}</h3>
+        <h3 className="text-[17px] leading-snug text-ink">{spec.name}</h3>
         {spec.summary && <p className="clamp-3 mt-2.5 flex-1 text-[14px] leading-7 text-steel-600">{spec.summary}</p>}
-        <span className="mt-4 flex items-center gap-1.5 text-[13.5px] font-bold text-navy-700 transition group-hover:gap-2.5">
+        <span className="mt-4 flex items-center gap-1.5 text-[13.5px] font-bold text-accent transition group-hover:gap-2.5">
           تفاصيل التخصص <ArrowLeft className="h-4 w-4" aria-hidden />
         </span>
       </div>

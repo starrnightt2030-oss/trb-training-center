@@ -83,7 +83,7 @@ export default function ParentPortal() {
           <section className="card overflow-hidden">
             <div className="border-b border-steel-200 bg-steel-50 px-6 py-4">
               <h2 className="flex items-center gap-2 text-[17px]">
-                <UserRound className="h-5 w-5 text-navy-700" aria-hidden /> بيانات الطالب
+                <UserRound className="h-5 w-5 text-accent" aria-hidden /> بيانات الطالب
               </h2>
             </div>
             <dl className="grid gap-px bg-steel-200 sm:grid-cols-2 lg:grid-cols-4">
@@ -96,9 +96,9 @@ export default function ParentPortal() {
                 { k: 'اسم ولي الأمر', v: s.guardian_name ?? '—' },
                 { k: 'حالة القيد', v: s.status === 'active' ? 'مقيَّد' : s.status },
               ].map((f) => (
-                <div key={f.k} className="bg-white p-5">
+                <div key={f.k} className="bg-surface p-5">
                   <dt className="text-[12.5px] font-bold text-steel-500">{f.k}</dt>
-                  <dd className="mt-1.5 text-[15.5px] font-semibold text-navy-900">{f.v}</dd>
+                  <dd className="mt-1.5 text-[15.5px] font-semibold text-ink">{f.v}</dd>
                 </div>
               ))}
             </dl>
@@ -113,9 +113,9 @@ export default function ParentPortal() {
               <StatCard label="نسبة الغياب" value={formatPercent(a?.absence_pct ?? null)} icon={TrendingDown}
                 tone="border-ember-200 bg-ember-50 text-ember-900" />
               <StatCard label="أيام الحضور" value={formatNumber(a?.attendance_days ?? 0)} icon={ShieldCheck}
-                tone="border-navy-200 bg-navy-50 text-navy-900" />
+                tone="border-navy-200 bg-navy-50 text-ink" />
               <StatCard label="أيام الغياب" value={formatNumber(a?.absence_days ?? 0)} icon={CalendarX2}
-                tone="border-steel-200 bg-white text-navy-900" />
+                tone="border-steel-200 bg-surface text-ink" />
             </div>
 
             {low && (
@@ -148,7 +148,7 @@ export default function ParentPortal() {
                       <Td>
                         <span className={clsx('rounded-full border px-2.5 py-0.5 text-[12px] font-semibold',
                           r.status === 'excused' ? 'border-brass-200 bg-brass-50 text-brass-800'
-                          : r.status === 'late'  ? 'border-navy-200 bg-navy-50 text-navy-800'
+                          : r.status === 'late'  ? 'border-navy-200 bg-navy-50 text-ink'
                           : 'border-ember-200 bg-ember-50 text-ember-800')}>
                           {ATTENDANCE_STATUS[r.status] ?? r.status}
                         </span>

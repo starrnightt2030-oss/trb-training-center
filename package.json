@@ -5,22 +5,25 @@
   "type": "module",
   "description": "المنصة الرقمية الرسمية لمركز تدريب شركة ترسانة الإسكندرية",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b --noEmit false && vite build",
+    "dev": "node scripts/copy-pdfjs-assets.mjs && vite",
+    "build": "node scripts/copy-pdfjs-assets.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "pdf:assets": "node scripts/copy-pdfjs-assets.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
     "@tanstack/react-query": "^5.62.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "framer-motion": "^11.18.2",
     "lucide-react": "^0.468.0",
     "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.0",
+    "react-pageflip": "^2.0.3",
     "react-router-dom": "^6.28.0",
     "xlsx": "^0.18.5",
     "zod": "^3.24.1"
@@ -35,5 +38,7 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.5"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

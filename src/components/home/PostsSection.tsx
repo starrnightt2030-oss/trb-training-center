@@ -5,7 +5,7 @@ import { formatDate } from '@/lib/format';
 import type { ContentKind, Post } from '@/types/db';
 
 const KIND_META: Record<ContentKind, { label: string; icon: typeof Newspaper; tone: string }> = {
-  news:         { label: 'خبر',      icon: Newspaper,  tone: 'bg-navy-100 text-navy-800' },
+  news:         { label: 'خبر',      icon: Newspaper,  tone: 'bg-navy-100 text-ink' },
   announcement: { label: 'إعلان',    icon: Megaphone,  tone: 'bg-brass-100 text-brass-800' },
   instruction:  { label: 'تعليمات',  icon: ScrollText, tone: 'bg-ember-50 text-ember-700' },
 };
@@ -35,7 +35,7 @@ export function PostCard({ post, horizontal }: { post: Post; horizontal?: boolea
             <CalendarDays className="h-3.5 w-3.5" aria-hidden /> {formatDate(post.published_at)}
           </span>
         </div>
-        <h3 className="clamp-2 text-[16px] leading-snug text-navy-900">{post.title}</h3>
+        <h3 className="clamp-2 text-[16px] leading-snug text-ink">{post.title}</h3>
         {post.excerpt && <p className="clamp-2 mt-2 text-[13.5px] leading-7 text-steel-600">{post.excerpt}</p>}
       </div>
     </Link>

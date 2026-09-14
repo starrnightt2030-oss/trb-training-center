@@ -34,7 +34,7 @@ export default function PostDetail() {
         {data.image_url && (
           <img src={data.image_url} alt="" className="mb-8 w-full rounded-2xl object-cover" loading="lazy" />
         )}
-        {data.excerpt && <p className="mb-6 border-r-4 border-brass-500 bg-brass-50/60 py-3 pr-4 text-[15.5px] leading-9 text-navy-800">{data.excerpt}</p>}
+        {data.excerpt && <p className="mb-6 border-r-4 border-brass-500 bg-brass-50/60 py-3 pr-4 text-[15.5px] leading-9 text-ink">{data.excerpt}</p>}
         {data.body && (
           <div className="prose-ar whitespace-pre-line text-[15.5px] leading-[2.15]">{data.body}</div>
         )}

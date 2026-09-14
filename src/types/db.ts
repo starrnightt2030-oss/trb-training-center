@@ -6,6 +6,7 @@ export type ComplaintStatus  =
   | 'new' | 'under_review' | 'in_progress' | 'answered' | 'resolved' | 'closed' | 'rejected';
 export type SubmitterRole    = 'parent' | 'student' | 'teacher' | 'staff' | 'other';
 export type AttendanceStatus = 'present' | 'absent' | 'excused' | 'late';
+export type SubjectKind      = 'specialized' | 'general' | 'cultural';
 export type AdminRole        = 'super_admin' | 'editor' | 'complaints_officer' | 'student_affairs';
 
 export interface Grade {
@@ -42,6 +43,7 @@ export interface Specialization {
 export interface Subject {
   id: string;
   name: string;
+  kind: SubjectKind;
   code: string | null;
   grade_id: number;
   specialization_id: string | null;
@@ -77,6 +79,11 @@ export interface Book {
   file_size_kb: number | null;
   pages: number | null;
   allow_download: boolean;
+  kind: SubjectKind;
+  edition: string | null;
+  keywords: string[];
+  is_featured: boolean;
+  downloads_count: number;
   sort_order: number;
   is_published: boolean;
   views_count: number;

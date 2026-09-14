@@ -1,4 +1,4 @@
-import type { ComplaintKind, ComplaintStatus, SubmitterRole } from '@/types/db';
+import type { ComplaintKind, ComplaintStatus, SubjectKind, SubmitterRole } from '@/types/db';
 
 export const COMPLAINT_KINDS: Record<ComplaintKind, string> = {
   complaint: 'شكوى',
@@ -56,3 +56,27 @@ export const EXCEL_COLUMNS = [
 ] as const;
 
 export type ExcelColumnKey = (typeof EXCEL_COLUMNS)[number]['key'];
+
+/** أنواع المواد والكتب في المكتبة الإلكترونية */
+export const SUBJECT_KINDS: Record<SubjectKind, { label: string; short: string; hint: string; tone: string }> = {
+  specialized: {
+    label: 'مواد التخصص',
+    short: 'تخصصية',
+    hint: 'المواد الفنية الخاصة بكل تخصص — نظري وعملي',
+    tone: 'bg-navy-100 text-accent border-navy-200',
+  },
+  general: {
+    label: 'مواد عامة',
+    short: 'عامة',
+    hint: 'اللغات والرياضيات والعلوم والحاسب — مشتركة بين التخصصات',
+    tone: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  },
+  cultural: {
+    label: 'مواد ثقافية',
+    short: 'ثقافية',
+    hint: 'التربية الدينية والوطنية والتاريخ والثقافة العامة',
+    tone: 'bg-brass-100 text-brass-800 border-brass-200',
+  },
+};
+
+export const SUBJECT_KIND_ORDER: SubjectKind[] = ['specialized', 'general', 'cultural'];

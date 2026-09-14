@@ -111,10 +111,10 @@ export default function Complaints() {
             <div className="p-8">
               <p className="text-[12.5px] font-bold uppercase tracking-widest text-steel-500">الرقم المرجعي</p>
               <div className="mt-3 flex items-center justify-center gap-3">
-                <p className="font-display text-[30px] font-bold tracking-wider text-navy-900" dir="ltr">{done.ticket}</p>
+                <p className="font-display text-[30px] font-bold tracking-wider text-ink" dir="ltr">{done.ticket}</p>
                 <button onClick={() => { void navigator.clipboard.writeText(done.ticket); toast.push({ tone: 'success', title: 'تم نسخ الرقم المرجعي' }); }}
                   aria-label="نسخ الرقم المرجعي"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-steel-300 text-navy-700 hover:bg-steel-50">
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-steel-300 text-accent hover:bg-steel-50">
                   <Copy className="h-4 w-4" aria-hidden />
                 </button>
               </div>
@@ -134,11 +134,11 @@ export default function Complaints() {
                   </a>
                 )}
                 <Link to="/complaints/track"
-                  className="inline-flex h-12 items-center gap-2 rounded-xl border border-steel-300 px-6 text-[14.5px] font-bold text-navy-800 hover:bg-steel-50">
+                  className="inline-flex h-12 items-center gap-2 rounded-xl border border-steel-300 px-6 text-[14.5px] font-bold text-ink hover:bg-steel-50">
                   <Search className="h-4 w-4" aria-hidden /> تتبع الطلب
                 </Link>
                 <button onClick={() => setDone(null)}
-                  className="inline-flex h-12 items-center rounded-xl border border-steel-300 px-6 text-[14.5px] font-bold text-navy-800 hover:bg-steel-50">
+                  className="inline-flex h-12 items-center rounded-xl border border-steel-300 px-6 text-[14.5px] font-bold text-ink hover:bg-steel-50">
                   تقديم طلب آخر
                 </button>
               </div>
@@ -156,7 +156,7 @@ export default function Complaints() {
         breadcrumb={[{ label: 'الشكاوى والمقترحات' }]}
         action={
           <Link to="/complaints/track"
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-steel-300 px-5 text-[14px] font-semibold text-navy-800 hover:bg-steel-50">
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-steel-300 px-5 text-[14px] font-semibold text-ink hover:bg-steel-50">
             <Search className="h-4 w-4" aria-hidden /> تتبع طلب سابق
           </Link>
         } />
@@ -169,12 +169,12 @@ export default function Complaints() {
 
         <form onSubmit={onSubmit} className="card mt-6 space-y-6 p-6 sm:p-8" noValidate>
           <fieldset className="space-y-5">
-            <legend className="mb-4 text-[16px] font-bold text-navy-900">١ — نوع الطلب</legend>
+            <legend className="mb-4 text-[16px] font-bold text-ink">١ — نوع الطلب</legend>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {(Object.keys(COMPLAINT_KINDS) as ComplaintKind[]).map((k) => (
                 <label key={k} className="relative cursor-pointer">
                   <input type="radio" value={k} {...register('kind', { required: true })} className="peer sr-only" />
-                  <span className="flex h-12 items-center justify-center rounded-xl border border-steel-300 text-[14.5px] font-semibold text-navy-800 transition peer-checked:border-navy-700 peer-checked:bg-navy-700 peer-checked:text-white peer-focus-visible:ring-4 peer-focus-visible:ring-navy-500/20">
+                  <span className="flex h-12 items-center justify-center rounded-xl border border-steel-300 text-[14.5px] font-semibold text-ink transition peer-checked:border-navy-700 peer-checked:bg-navy-700 peer-checked:text-white peer-focus-visible:ring-4 peer-focus-visible:ring-accent/20">
                     {COMPLAINT_KINDS[k]}
                   </span>
                 </label>
@@ -183,7 +183,7 @@ export default function Complaints() {
           </fieldset>
 
           <fieldset className="space-y-5 border-t border-steel-200 pt-6">
-            <legend className="mb-4 text-[16px] font-bold text-navy-900">٢ — بيانات مقدّم الطلب</legend>
+            <legend className="mb-4 text-[16px] font-bold text-ink">٢ — بيانات مقدّم الطلب</legend>
             <div className="grid gap-5 sm:grid-cols-2">
               <Input label="اسم مقدّم الطلب" required placeholder="الاسم رباعياً"
                 error={errors.submitter_name?.message}
@@ -221,7 +221,7 @@ export default function Complaints() {
           </fieldset>
 
           <fieldset className="space-y-5 border-t border-steel-200 pt-6">
-            <legend className="mb-4 text-[16px] font-bold text-navy-900">٣ — تفاصيل الطلب</legend>
+            <legend className="mb-4 text-[16px] font-bold text-ink">٣ — تفاصيل الطلب</legend>
 
             <Input label="موضوع الرسالة" required placeholder="عنوان مختصر يوضّح موضوع طلبك"
               error={errors.subject?.message}
@@ -235,7 +235,7 @@ export default function Complaints() {
 
             {allowAtt && (
               <div>
-                <label htmlFor="attachment" className="mb-1.5 block text-[13.5px] font-semibold text-navy-800">
+                <label htmlFor="attachment" className="mb-1.5 block text-[13.5px] font-semibold text-ink">
                   إرفاق ملف أو صورة (اختياري)
                 </label>
                 <label htmlFor="attachment"

@@ -52,11 +52,11 @@ export default function GalleryAdmin() {
               <li key={g.id} className="card overflow-hidden">
                 <img src={g.image_url} alt={g.title ?? ''} className="aspect-[4/3] w-full object-cover" loading="lazy" />
                 <div className="p-3">
-                  <p className="truncate text-[13.5px] font-semibold text-navy-900">{g.title ?? 'بدون عنوان'}</p>
+                  <p className="truncate text-[13.5px] font-semibold text-ink">{g.title ?? 'بدون عنوان'}</p>
                   <p className="mt-0.5 truncate text-[12px] text-steel-500">{g.album ?? '—'}{g.is_published ? '' : ' · مخفية'}</p>
                   <div className="mt-3 flex gap-1.5">
                     <button onClick={() => setEditing(g)} aria-label="تعديل"
-                      className="flex h-8 flex-1 items-center justify-center rounded-lg border border-steel-300 text-navy-700 hover:bg-steel-50">
+                      className="flex h-8 flex-1 items-center justify-center rounded-lg border border-steel-300 text-accent hover:bg-steel-50">
                       <Pencil className="h-3.5 w-3.5" aria-hidden />
                     </button>
                     <button onClick={() => setToDelete(g)} aria-label="حذف"

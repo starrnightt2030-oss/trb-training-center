@@ -1,129 +1,269 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import clsx from 'clsx';
-import { BookOpen, Menu, MessageSquareWarning, Phone, Users, X } from 'lucide-react';
+import {
+  BookOpen, ChevronDown, Menu, MessageSquareWarning, Phone, PlayCircle,
+  Images, Newspaper, GraduationCap, Info, Mail, Users, X, Search,
+} from 'lucide-react';
 import { useSetting } from '@/hooks/useSettings';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
-const NAV = [
-  { to: '/',                label: 'الرئيسية' },
-  { to: '/about',           label: 'عن المركز' },
-  { to: '/specializations', label: 'التخصصات' },
-  { to: '/library',         label: 'المكتبة الإلكترونية' },
-  { to: '/videos',          label: 'الفيديوهات' },
-  { to: '/news',            label: 'الأخبار والإعلانات' },
-  { to: '/gallery',         label: 'معرض الصور' },
-  { to: '/contact',         label: 'اتصل بنا' },
+type Item = { to: string; label: string; icon?: typeof BookOpen; desc?: string };
+
+const NAV: Array<Item & { children?: Item[] }> = [
+  { to: '/', label: 'الرئيسية' },
+  { to: '/about', label: 'عن المركز', icon: Info },
+  { to: '/specializations', label: 'التخصصات', icon: GraduationCap },
+  {
+    to: '/library', label: 'التعلّم', icon: BookOpen,
+    children: [
+      { to: '/library', label: 'المكتبة الإلكترونية', icon: BookOpen, desc: 'الكتب والمقررات والمذكّرات بصيغة PDF' },
+      { to: '/videos', label: 'الفيديوهات التعليمية', icon: PlayCircle, desc: 'شروح وتجارب عملية مسجّلة' },
+    ],
+  },
+  {
+    to: '/news', label: 'المستجدات', icon: Newspaper,
+    children: [
+      { to: '/news', label: 'الأخبار', icon: Newspaper, desc: 'آخر أخبار المركز وأنشطته' },
+      { to: '/announcements', label: 'الإعلانات', icon: Newspaper, desc: 'إعلانات القبول والمواعيد' },
+      { to: '/instructions', label: 'التعليمات', icon: Newspaper, desc: 'لوائح وتعليمات للطلاب وأولياء الأمور' },
+      { to: '/gallery', label: 'معرض الصور', icon: Images, desc: 'صور الورش والفعاليات' },
+    ],
+  },
+  { to: '/contact', label: 'اتصل بنا', icon: Mail },
 ];
 
-const QUICK = [
+const QUICK: Item[] = [
   { to: '/complaints', label: 'الشكاوى والمقترحات', icon: MessageSquareWarning },
-  { to: '/parent',     label: 'بوابة ولي الأمر',     icon: Users },
+  { to: '/parent', label: 'بوابة ولي الأمر', icon: Users },
 ];
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const closeTimer = useRef<number | undefined>(undefined);
   const { pathname } = useLocation();
 
-  const name  = useSetting('center.name', 'مركز تدريب شركة ترسانة الإسكندرية');
-  const logo  = useSetting('center.logo_url', '/logo.png');
+  const name    = useSetting('center.name', 'مركز تدريب شركة ترسانة الإسكندرية');
+  const logo    = useSetting('center.logo_url', '/logo.png');
   const company = useSetting('center.company', 'شركة ترسانة الإسكندرية');
-  const phone = useSetting('contact.phone', '');
+  const phone   = useSetting('contact.phone', '');
 
-  useEffect(() => { setOpen(false); }, [pathname]);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 26, restDelta: 0.001 });
+
+  useEffect(() => { setOpen(false); setOpenMenu(null); }, [pathname]);
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  return (
-    <header className={clsx('sticky top-0 z-50 transition-shadow', scrolled && 'shadow-lg shadow-navy-900/5')}>
-      <div className="brand-rule h-1" aria-hidden />
+  // منع تمرير الصفحة خلف قائمة الموبايل
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
-      {/* شريط علوي — مخفي على الموبايل */}
-      <div className="hidden bg-navy-900 text-white/80 lg:block">
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); setOpenMenu(null); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const hoverOpen = (k: string) => { window.clearTimeout(closeTimer.current); setOpenMenu(k); };
+  const hoverClose = () => { closeTimer.current = window.setTimeout(() => setOpenMenu(null), 140); };
+
+  const cleanPhone = phone && !phone.startsWith('[') ? phone : '';
+
+  return (
+    <header className="sticky top-0 z-50">
+      <div className="brand-rule h-[3px]" aria-hidden />
+
+      {/* شريط معلومات علوي */}
+      <div className="hidden bg-navy-950 text-white/70 lg:block">
         <div className="container-page flex h-9 items-center justify-between text-[12.5px]">
-          <p className="font-medium">{company} — الإدارة العامة لمركز التدريب</p>
-          <div className="flex items-center gap-5">
-            {phone && !phone.startsWith('[') && (
-              <a href={`tel:${phone}`} className="flex items-center gap-1.5 hover:text-white">
-                <Phone className="h-3.5 w-3.5" aria-hidden /> {phone}
+          <p className="font-medium tracking-wide">{company} — الإدارة العامة لمركز التدريب</p>
+          <div className="flex items-center gap-6">
+            {cleanPhone && (
+              <a href={`tel:${cleanPhone}`} className="flex items-center gap-1.5 transition hover:text-white">
+                <Phone className="h-3.5 w-3.5" aria-hidden />
+                <span className="nums-latn">{cleanPhone}</span>
               </a>
             )}
-            <Link to="/complaints" className="hover:text-white">تقديم شكوى أو مقترح</Link>
+            <Link to="/complaints/track" className="transition hover:text-white">تتبُّع طلب</Link>
+            <Link to="/complaints" className="transition hover:text-white">تقديم شكوى أو مقترح</Link>
           </div>
         </div>
       </div>
 
       {/* الشريط الرئيسي */}
-      <div className="border-b border-steel-200 bg-white/95 backdrop-blur">
-        <div className="container-page flex h-[68px] items-center justify-between gap-4">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img src={logo} alt="" className="h-11 w-11 shrink-0 rounded-full object-contain" />
+      <div className={clsx(
+        'border-b transition-all duration-300',
+        scrolled
+          ? 'border-line bg-surface/85 shadow-[0_10px_30px_-22px_rgb(var(--navy-900)/.55)] backdrop-blur-xl'
+          : 'border-transparent bg-surface',
+      )}>
+        <div className="container-page flex h-[var(--header-h)] items-center justify-between gap-4">
+          {/* الشعار */}
+          <Link to="/" className="group flex min-w-0 items-center gap-3">
+            <span className="relative shrink-0">
+              <img src={logo} alt="" className="h-11 w-11 rounded-full object-contain transition duration-500 group-hover:scale-105" />
+              <span className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-brass-400/40" aria-hidden />
+            </span>
             <span className="min-w-0">
-              <span className="block truncate font-display text-[15px] font-bold leading-tight text-navy-900 sm:text-[16.5px]">
+              <span className="block truncate font-display text-[15px] font-bold leading-tight text-ink sm:text-[16.5px]">
                 {name}
               </span>
-              <span className="hidden text-[12px] text-steel-500 sm:block">Alexandria Shipyard Training Centre</span>
+              <span className="hidden text-[11.5px] tracking-wide text-muted sm:block">
+                Alexandria Shipyard Training Centre
+              </span>
             </span>
           </Link>
 
+          {/* التنقل — سطح المكتب */}
           <nav className="hidden items-center gap-0.5 xl:flex" aria-label="التنقل الرئيسي">
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} end={n.to === '/'}
-                className={({ isActive }) => clsx(
-                  'rounded-lg px-3 py-2 text-[14px] font-semibold transition',
-                  isActive ? 'bg-navy-50 text-navy-800' : 'text-steel-600 hover:bg-steel-100 hover:text-navy-800',
-                )}>
-                {n.label}
-              </NavLink>
-            ))}
+            {NAV.map((n) => {
+              const hasKids = !!n.children?.length;
+              const isOpen = openMenu === n.to;
+              return (
+                <div key={n.to} className="relative"
+                  onMouseEnter={() => hasKids && hoverOpen(n.to)}
+                  onMouseLeave={() => hasKids && hoverClose()}>
+                  {hasKids ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpenMenu(isOpen ? null : n.to)}
+                      aria-expanded={isOpen}
+                      className={clsx(
+                        'flex items-center gap-1 rounded-xl px-3.5 py-2 text-[14.5px] font-semibold transition',
+                        isOpen || n.children!.some((c) => pathname.startsWith(c.to))
+                          ? 'bg-accent-soft text-accent'
+                          : 'text-ink-2 hover:bg-surface-3 hover:text-ink',
+                      )}>
+                      {n.label}
+                      <ChevronDown className={clsx('h-3.5 w-3.5 transition-transform duration-300', isOpen && 'rotate-180')} aria-hidden />
+                    </button>
+                  ) : (
+                    <NavLink to={n.to} end={n.to === '/'}
+                      className={({ isActive }) => clsx(
+                        'relative block rounded-xl px-3.5 py-2 text-[14.5px] font-semibold transition',
+                        isActive ? 'text-accent' : 'text-ink-2 hover:bg-surface-3 hover:text-ink',
+                      )}>
+                      {({ isActive }) => (
+                        <>
+                          {n.label}
+                          {isActive && (
+                            <motion.span layoutId="nav-underline"
+                              className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-accent"
+                              transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  )}
+
+                  <AnimatePresence>
+                    {hasKids && isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                        transition={{ duration: 0.22, ease: EASE }}
+                        className="absolute right-0 top-[calc(100%+10px)] w-[330px] overflow-hidden rounded-2xl border border-line bg-surface p-2 shadow-float">
+                        {n.children!.map((c) => (
+                          <Link key={c.to + c.label} to={c.to}
+                            className="flex items-start gap-3 rounded-xl p-3 transition hover:bg-surface-3">
+                            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                              {c.icon ? <c.icon className="h-[18px] w-[18px]" aria-hidden /> : null}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[14px] font-bold text-ink">{c.label}</span>
+                              {c.desc && <span className="mt-0.5 block text-[12.5px] leading-6 text-muted">{c.desc}</span>}
+                            </span>
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </nav>
 
+          {/* إجراءات */}
           <div className="flex items-center gap-2">
-            <Link to="/library"
-              className="hidden h-10 items-center gap-2 rounded-xl border border-steel-300 px-3.5 text-[14px] font-semibold text-navy-800 hover:bg-steel-50 lg:flex xl:hidden">
-              <BookOpen className="h-4 w-4" aria-hidden /> المكتبة
+            <Link to="/library" aria-label="المكتبة الإلكترونية"
+              className="hidden h-11 w-11 items-center justify-center rounded-xl border border-line-2 text-ink-2 transition hover:border-accent/45 hover:text-accent sm:flex xl:hidden">
+              <Search className="h-[18px] w-[18px]" aria-hidden />
             </Link>
+            <ThemeToggle />
             <Link to="/parent"
-              className="hidden h-10 items-center gap-2 rounded-xl bg-navy-700 px-4 text-[14px] font-semibold text-white hover:bg-navy-800 sm:flex">
+              className="btn btn-md btn-primary hidden sm:inline-flex">
               <Users className="h-4 w-4" aria-hidden /> بوابة ولي الأمر
             </Link>
             <button onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="mobile-menu"
               aria-label={open ? 'إغلاق القائمة' : 'فتح القائمة'}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-steel-300 text-navy-800 xl:hidden">
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-line-2 text-ink xl:hidden">
               {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
             </button>
           </div>
         </div>
+
+        {/* شريط تقدّم القراءة */}
+        <motion.div style={{ scaleX: progress }}
+          className="h-[2px] origin-right bg-gradient-to-l from-brass-400 via-accent to-ember-500"
+          aria-hidden />
       </div>
 
       {/* قائمة الموبايل */}
-      {open && (
-        <div id="mobile-menu" className="border-b border-steel-200 bg-white shadow-lift xl:hidden">
-          <nav className="container-page grid gap-1 py-3" aria-label="التنقل على الأجهزة الصغيرة">
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} end={n.to === '/'}
-                className={({ isActive }) => clsx(
-                  'rounded-xl px-4 py-3 text-[15px] font-semibold',
-                  isActive ? 'bg-navy-50 text-navy-800' : 'text-steel-700 hover:bg-steel-100',
-                )}>
-                {n.label}
-              </NavLink>
-            ))}
-            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-steel-200 pt-3">
-              {QUICK.map((q) => (
-                <Link key={q.to} to={q.to}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-navy-700 px-3 py-3 text-[14px] font-semibold text-white">
-                  <q.icon className="h-4 w-4" aria-hidden /> {q.label}
-                </Link>
-              ))}
-            </div>
-          </nav>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 top-0 z-40 bg-navy-950/60 backdrop-blur-sm xl:hidden" aria-hidden />
+            <motion.div
+              id="mobile-menu"
+              initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="relative z-50 max-h-[calc(100vh-var(--header-h))] overflow-y-auto border-b border-line bg-surface shadow-float xl:hidden">
+              <nav className="container-page grid gap-1 py-4" aria-label="التنقل على الأجهزة الصغيرة">
+                {NAV.flatMap((n) => (n.children?.length ? n.children : [n])).map((n) => (
+                  <NavLink key={n.to + n.label} to={n.to} end={n.to === '/'}
+                    className={({ isActive }) => clsx(
+                      'flex items-center gap-3 rounded-xl px-4 py-3.5 text-[15px] font-semibold transition',
+                      isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-surface-3',
+                    )}>
+                    {n.icon ? <n.icon className="h-[18px] w-[18px] opacity-70" aria-hidden /> : <span className="w-[18px]" />}
+                    {n.label}
+                  </NavLink>
+                ))}
+                <div className="mt-3 grid gap-2 border-t border-line pt-4 sm:grid-cols-2">
+                  {QUICK.map((q) => (
+                    <Link key={q.to} to={q.to} className="btn btn-md btn-primary w-full">
+                      {q.icon ? <q.icon className="h-4 w-4" aria-hidden /> : null} {q.label}
+                    </Link>
+                  ))}
+                </div>
+                {cleanPhone && (
+                  <a href={`tel:${cleanPhone}`} className="btn btn-md btn-ghost mt-2 w-full">
+                    <Phone className="h-4 w-4" aria-hidden /> <span className="nums-latn">{cleanPhone}</span>
+                  </a>
+                )}
+              </nav>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

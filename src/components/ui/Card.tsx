@@ -11,7 +11,7 @@ export function CardHeader({ title, subtitle, action, className }: {
   return (
     <div className={clsx('flex items-start justify-between gap-4 border-b border-steel-200/70 px-5 py-4', className)}>
       <div className="min-w-0">
-        <h3 className="text-base font-bold text-navy-900">{title}</h3>
+        <h3 className="text-base font-bold text-ink">{title}</h3>
         {subtitle && <p className="mt-0.5 text-[13px] text-steel-500">{subtitle}</p>}
       </div>
       {action}

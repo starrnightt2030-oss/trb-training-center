@@ -169,7 +169,7 @@ export function AdminLayout() {
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-steel-300">
             <Menu className="h-5 w-5" aria-hidden />
           </button>
-          <span className="flex items-center gap-2 font-bold text-navy-900">
+          <span className="flex items-center gap-2 font-bold text-ink">
             <ClipboardList className="h-5 w-5" aria-hidden /> لوحة الإدارة
           </span>
         </header>

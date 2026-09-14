@@ -19,7 +19,7 @@ export function ServicesSection() {
             </div>
             <h3 className="text-[16.5px]">{s.title}</h3>
             <p className="mt-2 text-[13.5px] leading-7 text-steel-600">{s.desc}</p>
-            <span className="mt-4 flex items-center gap-1.5 text-[13px] font-bold text-navy-700 transition group-hover:gap-2.5">
+            <span className="mt-4 flex items-center gap-1.5 text-[13px] font-bold text-accent transition group-hover:gap-2.5">
               الانتقال <ArrowLeft className="h-4 w-4" aria-hidden />
             </span>
           </Link>

@@ -25,7 +25,7 @@ export function SectionTitle({ eyebrow, title, description, action, actionTo, ac
       {action ?? (actionTo && (
         <Link to={actionTo}
           className={clsx('flex items-center gap-1 text-[14px] font-bold transition',
-            light ? 'text-white/80 hover:text-white' : 'text-navy-700 hover:text-navy-900')}>
+            light ? 'text-white/80 hover:text-white' : 'text-accent hover:text-ink')}>
           {actionLabel ?? 'عرض الكل'} <ChevronLeft className="h-4 w-4" aria-hidden />
         </Link>
       ))}

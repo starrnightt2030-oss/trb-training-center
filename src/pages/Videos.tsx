@@ -42,13 +42,13 @@ export default function Videos() {
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setGrade(null)}
               className={clsx('h-10 rounded-xl px-4 text-[14px] font-semibold',
-                !grade ? 'bg-navy-700 text-white' : 'border border-steel-300 text-navy-800 hover:bg-steel-50')}>
+                !grade ? 'bg-navy-700 text-white' : 'border border-steel-300 text-ink hover:bg-steel-50')}>
               كل الصفوف
             </button>
             {grades.data?.map((g) => (
               <button key={g.id} onClick={() => setGrade(g.id)}
                 className={clsx('h-10 rounded-xl px-4 text-[14px] font-semibold',
-                  grade === g.id ? 'bg-navy-700 text-white' : 'border border-steel-300 text-navy-800 hover:bg-steel-50')}>
+                  grade === g.id ? 'bg-navy-700 text-white' : 'border border-steel-300 text-ink hover:bg-steel-50')}>
                 {g.name}
               </button>
             ))}
@@ -75,7 +75,7 @@ export default function Videos() {
       <Modal open={!!active} onClose={() => setActive(null)} title={active?.title ?? ''} size="lg"
         footer={activeId ? (
           <a href={youtubeWatch(activeId)} target="_blank" rel="noopener noreferrer"
-             className="inline-flex h-10 items-center gap-2 rounded-xl border border-steel-300 px-4 text-[14px] font-semibold text-navy-800 hover:bg-steel-50">
+             className="inline-flex h-10 items-center gap-2 rounded-xl border border-steel-300 px-4 text-[14px] font-semibold text-ink hover:bg-steel-50">
             <ExternalLink className="h-4 w-4" aria-hidden /> فتح على يوتيوب
           </a>
         ) : undefined}>

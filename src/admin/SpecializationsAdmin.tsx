@@ -103,7 +103,7 @@ export default function SpecializationsAdmin() {
                   <Td>
                     <div className="flex gap-1.5">
                       <button onClick={() => setEditing(s)} aria-label={`تعديل ${s.name}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-navy-700 hover:bg-steel-50">
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-accent hover:bg-steel-50">
                         <Pencil className="h-4 w-4" aria-hidden />
                       </button>
                       <button onClick={() => setToDelete(s)} aria-label={`حذف ${s.name}`}

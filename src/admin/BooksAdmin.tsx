@@ -11,8 +11,9 @@ import { Pagination, Table, Td, Th } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
 import { deleteBook, fetchBooks, fetchGrades, fetchSpecializations, fetchSubjects, saveBook } from '@/data/api';
 import { formatFileSize, slugify } from '@/lib/format';
+import { SUBJECT_KINDS, SUBJECT_KIND_ORDER } from '@/lib/constants';
 import { useSeo } from '@/hooks/useSeo';
-import type { Book } from '@/types/db';
+import type { Book, SubjectKind } from '@/types/db';
 
 const PAGE_SIZE = 20;
 
@@ -52,7 +53,7 @@ export default function BooksAdmin() {
   return (
     <AdminPage title="المكتبة الإلكترونية — الكتب"
       description="ارفع الكتب والمقررات والمذكرات بصيغة PDF، وحدّد الصف والمادة والتخصص، وتحكّم في السماح بالتحميل."
-      action={<Button onClick={() => setEditing({ is_published: true, allow_download: true, sort_order: 99 })}
+      action={<Button onClick={() => setEditing({ is_published: true, allow_download: true, sort_order: 99, kind: 'specialized', keywords: [] })}
         icon={<Plus className="h-4 w-4" />}>إضافة كتاب</Button>}>
 
       <div className="flex flex-wrap gap-3">
@@ -60,10 +61,10 @@ export default function BooksAdmin() {
           <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel-400" aria-hidden />
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="بحث بالعنوان أو المؤلف…" aria-label="بحث"
-            className="h-11 w-full rounded-xl border border-steel-300 bg-white pr-10 pl-3 text-[14.5px]" />
+            className="h-11 w-full rounded-xl border border-steel-300 bg-surface pr-10 pl-3 text-[14.5px]" />
         </div>
         <select value={grade ?? ''} onChange={(e) => { setGrade(e.target.value ? Number(e.target.value) : null); setPage(1); }}
-          aria-label="الصف" className="h-11 rounded-xl border border-steel-300 bg-white px-3 text-[14.5px]">
+          aria-label="الصف" className="h-11 rounded-xl border border-steel-300 bg-surface px-3 text-[14.5px]">
           <option value="">كل الصفوف</option>
           {grades.data?.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
@@ -75,7 +76,7 @@ export default function BooksAdmin() {
           <>
             <Table>
               <thead>
-                <tr><Th>الكتاب</Th><Th>الصف</Th><Th>الملف</Th><Th>التحميل</Th><Th>الحالة</Th><Th className="w-32">إجراءات</Th></tr>
+                <tr><Th>الكتاب</Th><Th>النوع</Th><Th>الصف</Th><Th>الملف</Th><Th>التحميل</Th><Th>الحالة</Th><Th className="w-32">إجراءات</Th></tr>
               </thead>
               <tbody>
                 {list.data.rows.map((b) => (
@@ -91,6 +92,9 @@ export default function BooksAdmin() {
                         </div>
                       </div>
                     </Td>
+                    <Td>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11.5px] font-bold ${SUBJECT_KINDS[b.kind ?? 'specialized'].tone}`}>{SUBJECT_KINDS[b.kind ?? 'specialized'].short}</span>
+                    </Td>
                     <Td className="text-steel-600">{grades.data?.find((g) => g.id === b.grade_id)?.name ?? '—'}</Td>
                     <Td className="text-[13px] text-steel-600">{b.pdf_url ? formatFileSize(b.file_size_kb) : 'لا يوجد ملف'}</Td>
                     <Td className="text-[13px]">{b.allow_download ? 'مسموح' : 'قراءة فقط'}</Td>
@@ -98,7 +102,7 @@ export default function BooksAdmin() {
                     <Td>
                       <div className="flex gap-1.5">
                         <button onClick={() => setEditing(b)} aria-label={`تعديل ${b.title}`}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-navy-700 hover:bg-steel-50">
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-accent hover:bg-steel-50">
                           <Pencil className="h-4 w-4" aria-hidden />
                         </button>
                         <button onClick={() => setToDelete(b)} aria-label={`حذف ${b.title}`}
@@ -128,6 +132,16 @@ export default function BooksAdmin() {
             <Textarea label="وصف مختصر" rows={3} value={editing.description ?? ''} onChange={(e) => set({ description: e.target.value })} />
 
             <div className="grid gap-5 sm:grid-cols-2">
+              <Select label="نوع الكتاب" value={editing.kind ?? 'specialized'}
+                hint="يُصنَّف به الكتاب في المكتبة أمام الطالب"
+                onChange={(e) => set({ kind: e.target.value as SubjectKind })}>
+                {SUBJECT_KIND_ORDER.map((k) => (
+                  <option key={k} value={k}>{SUBJECT_KINDS[k].label}</option>
+                ))}
+              </Select>
+              <Input label="الطبعة / العام الدراسي" value={editing.edition ?? ''}
+                hint="مثال: الطبعة الأولى 2026/2027"
+                onChange={(e) => set({ edition: e.target.value })} />
               <Input label="المؤلف / الجهة" value={editing.author ?? ''} onChange={(e) => set({ author: e.target.value })} />
               <Select label="الصف" value={String(editing.grade_id ?? '')}
                 onChange={(e) => set({ grade_id: e.target.value ? Number(e.target.value) : null, subject_id: null })}>
@@ -159,7 +173,13 @@ export default function BooksAdmin() {
               value={String(editing.file_size_kb ?? '')}
               onChange={(e) => set({ file_size_kb: e.target.value ? Number(e.target.value) : null })} />
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="كلمات مفتاحية للبحث" value={(editing.keywords ?? []).join('، ')}
+              hint="افصل بينها بفاصلة — تساعد الطالب في العثور على الكتاب"
+              onChange={(e) => set({ keywords: e.target.value.split(/[،,]/).map((k) => k.trim()).filter(Boolean) })} />
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Switch label="كتاب مختار" checked={editing.is_featured === true}
+                hint="يظهر في الرفّ المختار أعلى المكتبة" onChange={(v) => set({ is_featured: v })} />
               <Switch label="السماح بتحميل PDF" checked={editing.allow_download !== false}
                 hint="إن أُوقف يُقرأ الكتاب داخل الموقع فقط" onChange={(v) => set({ allow_download: v })} />
               <Switch label="منشور على الموقع" checked={editing.is_published !== false}

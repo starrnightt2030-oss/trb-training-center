@@ -49,9 +49,9 @@ export default function Contact() {
           {cards.map((c) => {
             const inner = (
               <>
-                <c.icon className="mb-4 h-6 w-6 text-navy-700" aria-hidden />
+                <c.icon className="mb-4 h-6 w-6 text-accent" aria-hidden />
                 <p className="text-[12.5px] font-bold uppercase tracking-wider text-steel-500">{c.label}</p>
-                <p className="mt-1.5 text-[15px] font-semibold leading-8 text-navy-900">{c.value}</p>
+                <p className="mt-1.5 text-[15px] font-semibold leading-8 text-ink">{c.value}</p>
               </>
             );
             return c.href
@@ -88,7 +88,7 @@ export default function Contact() {
               {DEPARTMENTS.map((d) => (
                 <li key={d.need} className="flex flex-wrap items-center justify-between gap-2 px-6 py-3.5">
                   <span className="text-[14px] text-steel-700">{d.need}</span>
-                  <span className="text-[13px] font-bold text-navy-800">{d.dept}</span>
+                  <span className="text-[13px] font-bold text-ink">{d.dept}</span>
                 </li>
               ))}
             </ul>

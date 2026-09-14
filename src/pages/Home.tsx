@@ -10,6 +10,7 @@ import { SpecializationsGrid } from '@/components/home/SpecializationsGrid';
 import { PostCard } from '@/components/home/PostsSection';
 import { GalleryGrid } from '@/components/home/GallerySection';
 import { SectionTitle } from '@/components/shared/SectionTitle';
+import { Reveal } from '@/components/ui/Motion';
 import { EmptyState, SkeletonGrid } from '@/components/ui/States';
 import { fetchGallery, fetchPosts, fetchSpecializations, fetchVideos } from '@/data/api';
 import { useSetting, useSettingBool } from '@/hooks/useSettings';
@@ -47,8 +48,8 @@ export default function Home() {
       <AboutSection />
 
       {/* التخصصات */}
-      <section className="bg-white py-16 sm:py-20">
-        <div className="container-page">
+      <section className="bg-surface py-16 sm:py-20">
+        <Reveal className="container-page">
           <SectionTitle eyebrow="البرامج التدريبية" title="التخصصات الفنية"
             description="سبعة تخصصات فنية يدرسها المتعلم على ثلاث سنوات، تجمع بين التعليم النظري والتدريب العملي داخل ورش المركز وورش الشركة الإنتاجية."
             actionTo="/specializations" actionLabel="كل التخصصات" />
@@ -56,7 +57,7 @@ export default function Home() {
             : specs.data?.length
               ? <SpecializationsGrid items={specs.data.slice(0, 6)} />
               : <EmptyState title="لا توجد تخصصات منشورة" description="تُضاف التخصصات من لوحة الإدارة." />}
-        </div>
+        </Reveal>
       </section>
 
       {showStats && <StatsSection />}
@@ -68,11 +69,11 @@ export default function Home() {
             { title: 'أحدث الأخبار', to: '/news',          q: news,  empty: 'لا توجد أخبار منشورة حالياً.' },
             { title: 'الإعلانات',     to: '/announcements', q: anns,  empty: 'لا توجد إعلانات حالياً.' },
             { title: 'التعليمات',     to: '/instructions',  q: instr, empty: 'لا توجد تعليمات منشورة.' },
-          ].map((col) => (
-            <div key={col.to}>
+          ].map((col, ci) => (
+            <Reveal key={col.to} delay={ci * 0.08}>
               <div className="mb-5 flex items-center justify-between border-b border-steel-200 pb-3">
                 <h2 className="text-[19px]">{col.title}</h2>
-                <Link to={col.to} className="flex items-center gap-1 text-[13px] font-bold text-navy-700 hover:text-navy-900">
+                <Link to={col.to} className="flex items-center gap-1 text-[13px] font-bold text-accent hover:text-ink">
                   الكل <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
                 </Link>
               </div>
@@ -87,7 +88,7 @@ export default function Home() {
                   {col.empty}
                 </p>
               )}
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -125,7 +126,7 @@ export default function Home() {
       {/* الشكاوى وبوابة ولي الأمر والتواصل */}
       <section className="container-page pb-20">
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="card overflow-hidden bg-blueprint p-8 text-white">
+          <Reveal className="card overflow-hidden bg-blueprint p-8 text-white">
             <MessageSquareWarning className="mb-4 h-8 w-8 text-brass-400" aria-hidden />
             <h2 className="text-[22px] text-white">الشكاوى والمقترحات والطلبات</h2>
             <p className="mt-3 max-w-lg text-[14.5px] leading-8 text-white/70">
@@ -134,25 +135,24 @@ export default function Home() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/complaints"
-                className="inline-flex h-12 items-center gap-2 rounded-xl bg-ember-600 px-6 text-[14.5px] font-bold text-white hover:bg-ember-700">
+                className="inline-flex h-12 items-center gap-2 rounded-xl bg-ember-600 px-6 text-[14.5px] font-bold text-white shadow-[0_14px_34px_-14px_rgb(var(--ember-600)/1)] transition hover:bg-ember-700">
                 تقديم طلب جديد
               </Link>
               <Link to="/complaints/track"
-                className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/25 px-6 text-[14.5px] font-bold text-white hover:bg-white/10">
+                className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/25 px-6 text-[14.5px] font-bold text-white transition hover:border-white/50 hover:bg-white/10">
                 تتبع طلب سابق
               </Link>
             </div>
-          </div>
+          </Reveal>
 
           <div className="grid gap-5">
             <div className="card p-7">
-              <Users className="mb-4 h-8 w-8 text-navy-700" aria-hidden />
+              <Users className="mb-4 h-8 w-8 text-accent" aria-hidden />
               <h2 className="text-[20px]">بوابة ولي الأمر</h2>
               <p className="mt-2.5 text-[14.5px] leading-8 text-steel-600">
                 تابع نسبة حضور ابنك وأيام غيابه وسجل التواريخ ببيانات محدَّثة من إدارة شئون الطلاب.
               </p>
-              <Link to="/parent"
-                className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-navy-700 px-5 text-[14px] font-bold text-white hover:bg-navy-800">
+              <Link to="/parent" className="btn btn-md btn-primary mt-5">
                 الدخول إلى البوابة <ArrowLeft className="h-4 w-4" aria-hidden />
               </Link>
             </div>
@@ -161,10 +161,10 @@ export default function Home() {
               <Phone className="mb-4 h-8 w-8 text-brass-600" aria-hidden />
               <h2 className="text-[20px]">التواصل مع المركز</h2>
               <dl className="mt-3 space-y-1.5 text-[14px] text-steel-600">
-                {address && <div><dt className="inline font-semibold text-navy-800">العنوان: </dt><dd className="inline">{address}</dd></div>}
-                {phone && <div><dt className="inline font-semibold text-navy-800">الهاتف: </dt><dd className="inline">{phone}</dd></div>}
+                {address && <div><dt className="inline font-semibold text-ink">العنوان: </dt><dd className="inline">{address}</dd></div>}
+                {phone && <div><dt className="inline font-semibold text-ink">الهاتف: </dt><dd className="inline">{phone}</dd></div>}
               </dl>
-              <Link to="/contact" className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-navy-700 hover:text-navy-900">
+              <Link to="/contact" className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-accent hover:text-ink">
                 بيانات التواصل كاملة <ArrowLeft className="h-4 w-4" aria-hidden />
               </Link>
             </div>

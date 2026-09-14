@@ -10,7 +10,7 @@ import { extractYouTubeId } from '@/lib/youtube';
 import type {
   Book, Complaint, ComplaintUpdate, ContentKind, GalleryItem, Grade, ImportResult,
   ParentPortalResult, Post, SiteSetting, Specialization, Student, StudyPlan, Subject, Video,
-  AdminUser, AttendanceSummary,
+  AdminUser, AttendanceSummary, SubjectKind,
 } from '@/types/db';
 
 class DataError extends Error {
@@ -81,9 +81,10 @@ export async function reorder(table: string, items: Array<{ id: string; sort_ord
 }
 
 /* ───────────────────────────── المواد وخطط الدراسة ───────────────────────────── */
-export async function fetchSubjects(params?: { gradeId?: number; specializationId?: string | null }): Promise<Subject[]> {
+export async function fetchSubjects(params?: { gradeId?: number; specializationId?: string | null; kind?: SubjectKind | null }): Promise<Subject[]> {
   let q = supabase.from('subjects').select('*').order('is_common', { ascending: false }).order('sort_order');
   if (params?.gradeId) q = q.eq('grade_id', params.gradeId);
+  if (params?.kind) q = q.eq('kind', params.kind);
   if (params?.specializationId !== undefined && params.specializationId !== null) {
     q = q.or(`specialization_id.eq.${params.specializationId},is_common.eq.true`);
   }
@@ -118,18 +119,33 @@ export async function saveStudyPlan(row: Partial<StudyPlan>) {
 /* ───────────────────────────── المكتبة والكتب ───────────────────────────── */
 export interface BookFilters {
   gradeId?: number | null; subjectId?: string | null; specializationId?: string | null;
+  kind?: SubjectKind | null; featuredOnly?: boolean;
+  sort?: 'newest' | 'title' | 'popular' | 'order';
   search?: string; includeUnpublished?: boolean; page?: number; pageSize?: number;
 }
 
 export async function fetchBooks(f: BookFilters = {}): Promise<{ rows: Book[]; count: number }> {
   const page = f.page ?? 1;
   const size = f.pageSize ?? 24;
-  let q = supabase.from('books').select('*', { count: 'exact' }).order('sort_order').order('created_at', { ascending: false });
+  let q = supabase.from('books').select('*', { count: 'exact' });
+
+  switch (f.sort) {
+    case 'title':   q = q.order('title', { ascending: true }); break;
+    case 'popular': q = q.order('views_count', { ascending: false }).order('created_at', { ascending: false }); break;
+    case 'newest':  q = q.order('created_at', { ascending: false }); break;
+    default:        q = q.order('sort_order').order('created_at', { ascending: false });
+  }
+
   if (!f.includeUnpublished) q = q.eq('is_published', true);
   if (f.gradeId) q = q.eq('grade_id', f.gradeId);
   if (f.subjectId) q = q.eq('subject_id', f.subjectId);
   if (f.specializationId) q = q.eq('specialization_id', f.specializationId);
-  if (f.search?.trim()) q = q.or(`title.ilike.%${f.search.trim()}%,description.ilike.%${f.search.trim()}%,author.ilike.%${f.search.trim()}%`);
+  if (f.kind) q = q.eq('kind', f.kind);
+  if (f.featuredOnly) q = q.eq('is_featured', true);
+  if (f.search?.trim()) {
+    const t = f.search.trim().replace(/[%,()]/g, ' ');
+    q = q.or(`title.ilike.%${t}%,description.ilike.%${t}%,author.ilike.%${t}%,edition.ilike.%${t}%`);
+  }
   q = q.range((page - 1) * size, page * size - 1);
   const res = await q;
   if (res.error) throw new DataError(`تعذّر تحميل الكتب: ${res.error.message}`);
@@ -139,6 +155,24 @@ export async function fetchBooks(f: BookFilters = {}): Promise<{ rows: Book[]; c
 export async function fetchBook(id: string): Promise<Book | null> {
   const res = await supabase.from('books').select('*').eq('id', id).maybeSingle();
   return unwrap(res, 'تحميل الكتاب') as Book | null;
+}
+
+/** تسجيل فتح كتاب — دالة محكومة، لا تمنح الزائر صلاحية كتابة على الجدول */
+export async function bumpBookViews(id: string): Promise<void> {
+  try { await supabase.rpc('bump_book_views', { p_book: id }); }
+  catch { /* العدّاد ليس حرجاً — يُتجاهل فشله بصمت */ }
+}
+
+/** كتب مقترحة من نفس المادة أو التخصص أو الصف */
+export async function fetchRelatedBooks(book: Book, limit = 6): Promise<Book[]> {
+  let q = supabase.from('books').select('*').eq('is_published', true).neq('id', book.id).limit(limit);
+  if (book.subject_id) q = q.eq('subject_id', book.subject_id);
+  else if (book.specialization_id) q = q.eq('specialization_id', book.specialization_id);
+  else if (book.grade_id) q = q.eq('grade_id', book.grade_id);
+  else q = q.eq('kind', book.kind);
+  const res = await q;
+  if (res.error) return [];
+  return (res.data ?? []) as Book[];
 }
 
 export async function saveBook(row: Partial<Book>) {

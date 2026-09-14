@@ -34,7 +34,7 @@ export function AboutSection() {
           <h3 className="text-[18px]">قيمنا</h3>
           <ul className="mt-4 flex flex-wrap gap-2">
             {values.map((v) => (
-              <li key={v} className="rounded-lg bg-steel-100 px-3 py-1.5 text-[13px] font-semibold text-navy-800">{v}</li>
+              <li key={v} className="rounded-lg bg-steel-100 px-3 py-1.5 text-[13px] font-semibold text-ink">{v}</li>
             ))}
           </ul>
         </div>
@@ -48,8 +48,8 @@ export function AboutSection() {
           </div>
           <ol className="grid gap-px bg-steel-200 sm:grid-cols-2">
             {goals.map((g, i) => (
-              <li key={g} className="flex gap-3.5 bg-white p-5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-100 text-[13px] font-bold text-navy-800">
+              <li key={g} className="flex gap-3.5 bg-surface p-5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-100 text-[13px] font-bold text-ink">
                   {i + 1}
                 </span>
                 <span className="text-[14.5px] leading-7 text-steel-700">{g}</span>

@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { AdminPage } from './AdminPage';
 import { Input, ListField, Select, Switch, Textarea } from '@/components/ui/Field';
+import { SUBJECT_KINDS, SUBJECT_KIND_ORDER } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Modal } from '@/components/ui/Modal';
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States';
@@ -60,7 +61,7 @@ export default function SubjectsAdmin() {
     <AdminPage title="المواد الدراسية وخطط الدراسة"
       description="المواد المشتركة تظهر لجميع التخصصات، والمواد التخصصية تُربط بتخصص واحد. وخطة الدراسة تُحدَّد لكل تخصص في كل صف."
       action={tab === 'subjects'
-        ? <Button onClick={() => setEditing({ grade_id: grade, is_common: false, is_published: true, sort_order: 99 })}
+        ? <Button onClick={() => setEditing({ grade_id: grade, is_common: false, is_published: true, sort_order: 99, kind: 'specialized' })}
             icon={<Plus className="h-4 w-4" />}>إضافة مادة</Button>
         : undefined}>
 
@@ -68,7 +69,7 @@ export default function SubjectsAdmin() {
         {([['subjects', 'المواد الدراسية'], ['plans', 'خطط الدراسة']] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)}
             className={clsx('h-11 rounded-xl px-5 text-[14.5px] font-semibold transition',
-              tab === k ? 'bg-navy-700 text-white' : 'border border-steel-300 bg-white text-navy-800 hover:bg-steel-50')}>
+              tab === k ? 'bg-navy-700 text-white' : 'border border-steel-300 bg-surface text-ink hover:bg-steel-50')}>
             {l}
           </button>
         ))}
@@ -80,14 +81,14 @@ export default function SubjectsAdmin() {
             {grades.data?.map((g) => (
               <button key={g.id} onClick={() => setGrade(g.id)}
                 className={clsx('h-10 rounded-xl px-4 text-[14px] font-semibold',
-                  grade === g.id ? 'bg-navy-800 text-white' : 'border border-steel-300 bg-white text-navy-800')}>
+                  grade === g.id ? 'bg-navy-800 text-white' : 'border border-steel-300 bg-surface text-ink')}>
                 {g.name}
               </button>
             ))}
           </div>
         )}
         <select value={spec} onChange={(e) => setSpec(e.target.value)} aria-label="التخصص"
-          className="h-10 rounded-xl border border-steel-300 bg-white px-3 text-[14px]">
+          className="h-10 rounded-xl border border-steel-300 bg-surface px-3 text-[14px]">
           <option value="">{tab === 'plans' ? '— اختر التخصص —' : 'كل التخصصات'}</option>
           {specs.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -108,8 +109,8 @@ export default function SubjectsAdmin() {
                   <Td className="font-semibold">{s.name}</Td>
                   <Td>
                     <span className={clsx('rounded-full px-2.5 py-0.5 text-[12px] font-semibold',
-                      s.is_common ? 'bg-steel-100 text-steel-700' : 'bg-brass-100 text-brass-800')}>
-                      {s.is_common ? 'مشتركة' : 'تخصصية'}
+                      SUBJECT_KINDS[s.kind ?? 'specialized'].tone)}>
+                      {SUBJECT_KINDS[s.kind ?? 'specialized'].short}
                     </span>
                   </Td>
                   <Td className="text-steel-600">{s.is_common ? 'جميع التخصصات' : specName(s.specialization_id)}</Td>
@@ -118,7 +119,7 @@ export default function SubjectsAdmin() {
                   <Td>
                     <div className="flex gap-1.5">
                       <button onClick={() => setEditing(s)} aria-label={`تعديل ${s.name}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-navy-700 hover:bg-steel-50">
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-accent hover:bg-steel-50">
                         <Pencil className="h-4 w-4" aria-hidden />
                       </button>
                       <button onClick={() => setToDelete(s)} aria-label={`حذف ${s.name}`}
@@ -153,7 +154,7 @@ export default function SubjectsAdmin() {
                   </div>
                   {p ? (
                     <>
-                      <p className="text-[14px] font-semibold text-navy-800">{p.title}</p>
+                      <p className="text-[14px] font-semibold text-ink">{p.title}</p>
                       <p className="mt-1.5 text-[13px] leading-6 text-steel-600">{p.focus}</p>
                       <p className="mt-3 text-[12.5px] text-steel-500">
                         {p.theory_topics?.length ?? 0} بند نظري · {p.practical_topics?.length ?? 0} بند عملي
@@ -185,6 +186,18 @@ export default function SubjectsAdmin() {
               <Input label="ترتيب العرض" type="number" value={String(editing.sort_order ?? 99)}
                 onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} />
             </div>
+            <Select label="نوع المادة" value={editing.kind ?? 'specialized'}
+              hint="يُصنَّف به الكتاب والمادة في المكتبة الإلكترونية"
+              onChange={(e) => {
+                const k = e.target.value as 'specialized' | 'general' | 'cultural';
+                setEditing({ ...editing, kind: k, is_common: k !== 'specialized' ? true : editing.is_common,
+                             specialization_id: k !== 'specialized' ? null : editing.specialization_id });
+              }}>
+              {SUBJECT_KIND_ORDER.map((k) => (
+                <option key={k} value={k}>{SUBJECT_KINDS[k].label} — {SUBJECT_KINDS[k].hint}</option>
+              ))}
+            </Select>
+
             <Switch label="مادة مشتركة لجميع التخصصات" checked={!!editing.is_common}
               onChange={(v) => setEditing({ ...editing, is_common: v, specialization_id: v ? null : editing.specialization_id })} />
             {!editing.is_common && (

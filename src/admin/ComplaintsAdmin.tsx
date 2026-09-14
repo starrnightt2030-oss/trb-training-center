@@ -103,7 +103,7 @@ export default function ComplaintsAdmin() {
 
       {/* التصفية */}
       <div className="card p-5">
-        <div className="mb-4 flex items-center gap-2 text-[13.5px] font-bold text-navy-800">
+        <div className="mb-4 flex items-center gap-2 text-[13.5px] font-bold text-ink">
           <Filter className="h-4 w-4" aria-hidden /> التصفية والبحث
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -157,7 +157,7 @@ export default function ComplaintsAdmin() {
               <tbody>
                 {list.data.rows.map((c) => (
                   <tr key={c.id}>
-                    <Td><span className="font-mono text-[13px] font-bold text-navy-800" dir="ltr">{c.ticket_id}</span></Td>
+                    <Td><span className="font-mono text-[13px] font-bold text-ink" dir="ltr">{c.ticket_id}</span></Td>
                     <Td>{COMPLAINT_KINDS[c.kind]}</Td>
                     <Td>
                       <p className="font-semibold">{c.submitter_name}</p>
@@ -173,7 +173,7 @@ export default function ComplaintsAdmin() {
                     <Td className="whitespace-nowrap text-steel-500">{formatDateShort(c.created_at)}</Td>
                     <Td>
                       <button onClick={() => setOpen(c)} aria-label={`فتح الطلب ${c.ticket_id}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-navy-700 hover:bg-steel-50">
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-accent hover:bg-steel-50">
                         <Eye className="h-4 w-4" aria-hidden />
                       </button>
                     </Td>
@@ -207,7 +207,7 @@ export default function ComplaintsAdmin() {
               ].map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-[12.5px] font-bold text-steel-500">{k}</dt>
-                  <dd className="mt-0.5 text-[14.5px] text-navy-900">{v}</dd>
+                  <dd className="mt-0.5 text-[14.5px] text-ink">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -219,7 +219,7 @@ export default function ComplaintsAdmin() {
               </p>
               {open.attachment_url && (
                 <a href={open.attachment_url} target="_blank" rel="noopener noreferrer"
-                   className="mt-3 inline-flex items-center gap-2 text-[13.5px] font-semibold text-navy-700 hover:text-navy-900">
+                   className="mt-3 inline-flex items-center gap-2 text-[13.5px] font-semibold text-accent hover:text-ink">
                   <Download className="h-4 w-4" aria-hidden /> فتح المرفق
                 </a>
               )}

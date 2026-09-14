@@ -8,6 +8,7 @@ import { SettingsContext, useSettingsQuery } from '@/hooks/useSettings';
 import { ErrorState } from '@/components/ui/States';
 import { isConfigured } from '@/lib/supabase';
 import { SetupNotice } from '@/components/shared/SetupNotice';
+import { ThemeProvider } from '@/hooks/useTheme';
 
 /* ── تقسيم الحزمة: كل صفحة تُحمَّل عند زيارتها فقط ── */
 const Home            = lazy(() => import('@/pages/Home'));
@@ -114,15 +115,17 @@ function SettingsProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  if (!isConfigured) return <SetupNotice />;
+  if (!isConfigured) return <ThemeProvider><SetupNotice /></ThemeProvider>;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <SettingsProvider>
-          <RouterProvider router={router} fallbackElement={<ErrorState />} />
-        </SettingsProvider>
-      </ToastProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <SettingsProvider>
+            <RouterProvider router={router} fallbackElement={<ErrorState />} />
+          </SettingsProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

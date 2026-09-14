@@ -17,10 +17,10 @@ function Stat({ label, value, icon: Icon, to, tone }: {
 }) {
   const body = (
     <>
-      <div className={clsx('mb-3 flex h-10 w-10 items-center justify-center rounded-xl', tone ?? 'bg-navy-50 text-navy-700')}>
+      <div className={clsx('mb-3 flex h-10 w-10 items-center justify-center rounded-xl', tone ?? 'bg-navy-50 text-accent')}>
         <Icon className="h-5 w-5" aria-hidden />
       </div>
-      <p className="font-display text-[26px] font-bold leading-none text-navy-900">{value}</p>
+      <p className="font-display text-[26px] font-bold leading-none text-ink">{value}</p>
       <p className="mt-1.5 text-[13px] text-steel-500">{label}</p>
     </>
   );
@@ -81,7 +81,7 @@ export default function Dashboard() {
               <Stat label="طلبات جديدة"   value={formatNumber(s.complaints_new)}   icon={MessageSquareWarning}
                 tone="bg-brass-50 text-brass-700" to="/admin/complaints" />
               <Stat label="قيد المعالجة"  value={formatNumber(s.complaints_open)}  icon={MessageSquareWarning}
-                tone="bg-navy-50 text-navy-700" to="/admin/complaints" />
+                tone="bg-navy-50 text-accent" to="/admin/complaints" />
               <Stat label="مغلقة"         value={formatNumber(s.complaints_closed)} icon={CheckCircle2}
                 tone="bg-emerald-50 text-emerald-700" to="/admin/complaints" />
             </div>
@@ -92,7 +92,7 @@ export default function Dashboard() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[16px]">أحدث الطلبات</h2>
-          <Link to="/admin/complaints" className="text-[13.5px] font-bold text-navy-700 hover:text-navy-900">عرض الكل</Link>
+          <Link to="/admin/complaints" className="text-[13.5px] font-bold text-accent hover:text-ink">عرض الكل</Link>
         </div>
         {latest.isLoading ? <SkeletonRows rows={5} /> : latest.data?.rows.length ? (
           <Table>
@@ -102,7 +102,7 @@ export default function Dashboard() {
             <tbody>
               {latest.data.rows.map((c) => (
                 <tr key={c.id}>
-                  <Td><Link to="/admin/complaints" className="font-mono text-[13px] font-bold text-navy-700" dir="ltr">{c.ticket_id}</Link></Td>
+                  <Td><Link to="/admin/complaints" className="font-mono text-[13px] font-bold text-accent" dir="ltr">{c.ticket_id}</Link></Td>
                   <Td>{COMPLAINT_KINDS[c.kind]}</Td>
                   <Td>{c.submitter_name}</Td>
                   <Td className="max-w-[260px] truncate">{c.subject}</Td>
@@ -117,7 +117,7 @@ export default function Dashboard() {
             </tbody>
           </Table>
         ) : (
-          <p className="rounded-2xl border border-dashed border-steel-300 bg-white p-8 text-center text-[14px] text-steel-500">
+          <p className="rounded-2xl border border-dashed border-steel-300 bg-surface p-8 text-center text-[14px] text-steel-500">
             لا توجد طلبات مسجَّلة بعد.
           </p>
         )}

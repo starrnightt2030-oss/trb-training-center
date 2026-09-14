@@ -82,7 +82,7 @@ export default function ExcelImport() {
           <li key={s} className={clsx('flex min-w-[110px] flex-1 items-center gap-2 rounded-xl border px-3 py-2.5 text-[12.5px] font-semibold',
             i < step ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
             : i === step ? 'border-navy-700 bg-navy-700 text-white'
-            : 'border-steel-200 bg-white text-steel-400')}>
+            : 'border-steel-200 bg-surface text-steel-400')}>
             <span className={clsx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px]',
               i < step ? 'bg-emerald-600 text-white' : i === step ? 'bg-white/20 text-white' : 'bg-steel-100 text-steel-500')}>
               {i + 1}
@@ -107,11 +107,11 @@ export default function ExcelImport() {
             </Button>
 
             <details className="mt-5 rounded-xl border border-steel-200 p-4">
-              <summary className="cursor-pointer text-[13.5px] font-semibold text-navy-800">عرض الأعمدة المطلوبة</summary>
+              <summary className="cursor-pointer text-[13.5px] font-semibold text-ink">عرض الأعمدة المطلوبة</summary>
               <ul className="mt-3 space-y-1.5 text-[13px] text-steel-600">
                 {EXCEL_COLUMNS.map((c) => (
                   <li key={c.key}>
-                    <span className="font-mono font-bold text-navy-800" dir="ltr">{c.header}</span>
+                    <span className="font-mono font-bold text-ink" dir="ltr">{c.header}</span>
                     {c.required && <span className="mr-2 rounded bg-ember-50 px-1.5 py-0.5 text-[11px] font-bold text-ember-700">إجباري</span>}
                     {' — '}{c.hint}
                   </li>
@@ -125,7 +125,7 @@ export default function ExcelImport() {
             <h2 className="mb-2 text-[17px]">٢ — ارفع الملف</h2>
             <label className="mt-4 flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-steel-300 bg-steel-50 px-6 py-12 text-center transition hover:border-navy-400 hover:bg-navy-50/40">
               <FileUp className="h-10 w-10 text-steel-400" aria-hidden />
-              <span className="text-[15px] font-semibold text-navy-800">
+              <span className="text-[15px] font-semibold text-ink">
                 {parsing ? 'جارٍ قراءة الملف…' : parsed ? parsed.fileName : 'اختر ملف Excel أو CSV'}
               </span>
               <span className="text-[13px] text-steel-500">xlsx · xls · csv</span>
@@ -154,7 +154,7 @@ export default function ExcelImport() {
 
               <div className="my-5 grid gap-3 sm:grid-cols-3">
                 {[
-                  { l: 'إجمالي الصفوف', v: parsed.rows.length, tone: 'bg-navy-50 text-navy-800' },
+                  { l: 'إجمالي الصفوف', v: parsed.rows.length, tone: 'bg-navy-50 text-ink' },
                   { l: 'صفوف صالحة', v: parsed.validRows.length, tone: 'bg-emerald-50 text-emerald-800' },
                   { l: 'صفوف بها أخطاء', v: parsed.invalidRows.length, tone: 'bg-ember-50 text-ember-800' },
                 ].map((s) => (
@@ -253,7 +253,7 @@ export default function ExcelImport() {
               <div className="grid gap-3 p-6 sm:grid-cols-3">
                 {[
                   { l: 'سجل تمت إضافته', v: result.inserted, tone: 'bg-emerald-50 text-emerald-800' },
-                  { l: 'سجل تم تحديثه', v: result.updated, tone: 'bg-navy-50 text-navy-800' },
+                  { l: 'سجل تم تحديثه', v: result.updated, tone: 'bg-navy-50 text-ink' },
                   { l: 'سجل فشل', v: result.failed, tone: 'bg-ember-50 text-ember-800' },
                 ].map((s) => (
                   <div key={s.l} className={clsx('rounded-xl p-5 text-center', s.tone)}>
@@ -284,18 +284,18 @@ export default function ExcelImport() {
         <aside className="space-y-4">
           <div className="card p-5">
             <h2 className="mb-4 flex items-center gap-2 text-[16px]">
-              <FileSpreadsheet className="h-5 w-5 text-navy-700" aria-hidden /> آخر عمليات الاستيراد
+              <FileSpreadsheet className="h-5 w-5 text-accent" aria-hidden /> آخر عمليات الاستيراد
             </h2>
             {batches.isLoading ? <SkeletonRows rows={4} />
               : batches.data?.length ? (
                 <ul className="space-y-3">
                   {batches.data.map((b) => (
                     <li key={b.id} className="rounded-xl border border-steel-200 p-3.5">
-                      <p className="truncate text-[13.5px] font-semibold text-navy-900">{b.file_name ?? 'بدون اسم'}</p>
+                      <p className="truncate text-[13.5px] font-semibold text-ink">{b.file_name ?? 'بدون اسم'}</p>
                       <p className="mt-1 text-[12px] text-steel-500">{formatDateTime(b.created_at)}</p>
                       <p className="mt-2 flex flex-wrap gap-2 text-[12px]">
                         <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">+{b.rows_inserted}</span>
-                        <span className="rounded bg-navy-50 px-2 py-0.5 text-navy-700">↻{b.rows_updated}</span>
+                        <span className="rounded bg-navy-50 px-2 py-0.5 text-accent">↻{b.rows_updated}</span>
                         {b.rows_failed > 0 && <span className="rounded bg-ember-50 px-2 py-0.5 text-ember-700">✕{b.rows_failed}</span>}
                       </p>
                     </li>

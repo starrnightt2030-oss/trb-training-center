@@ -106,15 +106,15 @@ export default function StudentsAdmin() {
           <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-steel-400" aria-hidden />
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="بحث بالاسم أو الكود أو الرقم القومي…" aria-label="بحث"
-            className="h-11 w-full rounded-xl border border-steel-300 bg-white pr-10 pl-3 text-[14.5px]" />
+            className="h-11 w-full rounded-xl border border-steel-300 bg-surface pr-10 pl-3 text-[14.5px]" />
         </div>
         <select value={grade ?? ''} onChange={(e) => { setGrade(e.target.value ? Number(e.target.value) : null); setPage(1); }}
-          aria-label="الصف" className="h-11 rounded-xl border border-steel-300 bg-white px-3 text-[14.5px]">
+          aria-label="الصف" className="h-11 rounded-xl border border-steel-300 bg-surface px-3 text-[14.5px]">
           <option value="">كل الصفوف</option>
           {grades.data?.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
         <select value={spec ?? ''} onChange={(e) => { setSpec(e.target.value || null); setPage(1); }}
-          aria-label="التخصص" className="h-11 rounded-xl border border-steel-300 bg-white px-3 text-[14.5px]">
+          aria-label="التخصص" className="h-11 rounded-xl border border-steel-300 bg-surface px-3 text-[14.5px]">
           <option value="">كل التخصصات</option>
           {specs.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -151,7 +151,7 @@ export default function StudentsAdmin() {
                       <Td>
                         <div className="flex gap-1.5">
                           <button onClick={() => setEditing(s)} aria-label={`تعديل ${s.full_name}`}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-navy-700 hover:bg-steel-50">
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-steel-300 text-accent hover:bg-steel-50">
                             <Pencil className="h-4 w-4" aria-hidden />
                           </button>
                           <button onClick={() => setToDelete(s)} aria-label={`حذف ${s.full_name}`}

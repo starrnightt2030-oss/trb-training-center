@@ -5,7 +5,7 @@ import { Button } from './Button';
 
 /* ─────────────────── حالة التحميل ─────────────────── */
 export function Spinner({ className }: { className?: string }) {
-  return <Loader2 className={clsx('h-5 w-5 animate-spin text-navy-600', className)} aria-hidden />;
+  return <Loader2 className={clsx('h-5 w-5 animate-spin text-accent', className)} aria-hidden />;
 }
 
 export function LoadingBlock({ label = 'جارٍ التحميل…', className }: { label?: string; className?: string }) {
@@ -56,7 +56,7 @@ export function EmptyState({ title, description, icon, action, className }: {
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-steel-100 text-steel-400">
         {icon ?? <Inbox className="h-7 w-7" aria-hidden />}
       </div>
-      <h3 className="text-base font-bold text-navy-800">{title}</h3>
+      <h3 className="text-base font-bold text-ink">{title}</h3>
       {description && <p className="mt-1.5 max-w-md text-sm leading-7 text-steel-500">{description}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
@@ -93,7 +93,7 @@ export function Alert({ tone = 'info', title, children }: {
   tone?: 'info' | 'success' | 'warning' | 'danger'; title?: string; children: ReactNode;
 }) {
   const tones = {
-    info:    'border-navy-200 bg-navy-50 text-navy-800',
+    info:    'border-navy-200 bg-navy-50 text-ink',
     success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
     warning: 'border-brass-200 bg-brass-50 text-brass-800',
     danger:  'border-ember-200 bg-ember-50 text-ember-800',

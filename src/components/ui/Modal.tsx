@@ -28,14 +28,14 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     <div className="fixed inset-0 z-[80] flex items-end justify-center overflow-y-auto bg-navy-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
          onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
-           className={clsx('w-full rounded-t-3xl bg-white shadow-lift outline-none sm:rounded-2xl animate-fade-up', widths[size])}>
+           className={clsx('w-full rounded-t-3xl bg-surface shadow-lift outline-none sm:rounded-2xl animate-fade-up', widths[size])}>
         <div className="flex items-start justify-between gap-4 border-b border-steel-200 px-5 py-4">
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-navy-900">{title}</h2>
+            <h2 className="text-lg font-bold text-ink">{title}</h2>
             {description && <p className="mt-0.5 text-[13px] text-steel-500">{description}</p>}
           </div>
           <button onClick={onClose} aria-label="إغلاق"
-                  className="rounded-lg p-2 text-steel-500 transition hover:bg-steel-100 hover:text-navy-800">
+                  className="rounded-lg p-2 text-steel-500 transition hover:bg-steel-100 hover:text-ink">
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
@@ -56,7 +56,7 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, message, confir
       footer={
         <>
           <button onClick={onClose}
-            className="h-10 rounded-xl border border-steel-300 px-4 text-sm font-semibold text-navy-800 hover:bg-steel-50">
+            className="h-10 rounded-xl border border-steel-300 px-4 text-sm font-semibold text-ink hover:bg-steel-50">
             إلغاء
           </button>
           <button onClick={onConfirm} disabled={loading}
