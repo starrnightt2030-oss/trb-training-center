@@ -90,14 +90,19 @@ npm run build && npm run preview
    احتفظ بكلمة مرور قاعدة البيانات في مكان آمن.
 2. من القائمة الجانبية افتح **SQL Editor** ونفّذ الملفات **بهذا الترتيب**:
 
+   > على قاعدة بيانات تعمل بالفعل، نفّذ **`0006_library_categories.sql` فقط** — فهو
+   > آمن للتنفيذ أكثر من مرة ولا يمسّ أي بيانات قائمة. وهو **شرط لازم** قبل نشر
+   > هذا الإصدار، لأن لوحة الإدارة صارت تحفظ نوع المادة والطبعة والكلمات المفتاحية.
+
    | # | الملف | ماذا يفعل |
    |---|---|---|
    | 1 | `supabase/migrations/0001_schema.sql` | ينشئ الجداول والعلاقات والفهارس |
    | 2 | `supabase/migrations/0002_rls_and_rpc.sql` | سياسات الأمان والدوال المحكومة |
    | 3 | `supabase/migrations/0003_storage.sql` | مخازن الصور والكتب والمرفقات |
-   | 4 | `supabase/migrations/0005_complaint_submit.sql` | دالة إرسال الشكوى وتقييد المعدل |
-   | 5 | `supabase/migrations/0006_library_categories.sql` | تصنيف المكتبة (نوع المادة) وحقول الكتاب الإضافية |
-   | 6 | `supabase/seed/0001_seed.sql` | البيانات المبدئية (التخصصات والمواد والإعدادات) |
+   | 4 | `supabase/migrations/0004_hardening.sql` | تشديد الصلاحيات وحماية الدوال |
+   | 5 | `supabase/migrations/0005_complaint_submit.sql` | دالة إرسال الشكوى وتقييد المعدل |
+   | 6 | `supabase/migrations/0006_library_categories.sql` | تصنيف المكتبة (نوع المادة) وحقول الكتاب الإضافية |
+   | 7 | `supabase/seed/0001_seed.sql` | البيانات المبدئية (التخصصات والمواد والإعدادات) |
 
 3. من **Project Settings ▸ API** انسخ:
    - `Project URL` ← ضعه في `VITE_SUPABASE_URL`
