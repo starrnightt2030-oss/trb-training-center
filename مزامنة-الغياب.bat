@@ -32,8 +32,10 @@ if exist "tools\.env.sync" goto :env_ok
 
 echo [SETUP] First run - the secret key is needed.
 echo.
-echo   Where to get it:
-echo     Supabase  ^>  Project Settings  ^>  API  ^>  service_role  (secret)
+echo   Where to get it (Supabase dashboard):
+echo     Project Settings  ^>  API Keys  ^>  Secret keys  ^>  default
+echo     Reveal it, then copy it.
+echo     (older projects: Project Settings ^> API ^> service_role)
 echo.
 echo   IMPORTANT: this key is SECRET. It is saved only in
 echo   tools\.env.sync on this computer, is ignored by Git,
@@ -49,7 +51,7 @@ echo   Project URL: %SB_URL%
 echo.
 
 set "SB_KEY="
-set /p "SB_KEY=Paste the service_role key here: "
+set /p "SB_KEY=Paste the secret key here (sb_secret_... or eyJ...): "
 if "%SB_KEY%"=="" goto :no_key
 
 if not exist "tools" mkdir "tools"
