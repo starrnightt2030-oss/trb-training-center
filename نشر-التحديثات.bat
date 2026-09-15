@@ -50,7 +50,7 @@ git branch -M main
 git remote get-url origin >nul 2>nul
 if not errorlevel 1 goto :remote_ok
 echo [SETUP] Adding remote 'origin'...
-git remote add origin https://github.com/mohameddeldawly-code/trb-training-center.git
+git remote add origin https://starrnightt2030-oss@github.com/starrnightt2030-oss/trb-training-center.git
 :remote_ok
 for /f "tokens=*" %%r in ('git remote get-url origin') do set "ORIGIN=%%r"
 echo [OK] Remote: %ORIGIN%
@@ -230,10 +230,10 @@ echo ============================================================
 echo  [DONE] Update pushed successfully.
 echo.
 echo  Deployment progress (GitHub Actions):
-echo    https://github.com/mohameddeldawly-code/trb-training-center/actions
+echo    https://github.com/starrnightt2030-oss/trb-training-center/actions
 echo.
 echo  Live site (ready in about 1-3 minutes):
-echo    https://mohameddeldawly-code.github.io/trb-training-center/
+echo    https://starrnightt2030-oss.github.io/trb-training-center/
 echo ============================================================
 echo.
 pause
@@ -247,7 +247,7 @@ echo   Look at the message above:
 echo.
 echo   1^) "Permission ... denied to SOME-OTHER-ACCOUNT"  (error 403^)
 echo      Windows is signed in to GitHub with the WRONG account.
-echo      This repository belongs to:  mohameddeldawly-code
+echo      This repository belongs to:  starrnightt2030-oss
 echo      The saved login must be cleared and redone.
 echo.
 echo   2^) "could not resolve host" / timeout
@@ -276,7 +276,7 @@ REM  account, because a helper can key the entry either way.
 git credential reject < "%TEMP%\trb_cred.txt" >nul 2>nul
 >"%TEMP%\trb_cred.txt" echo protocol=https
 >>"%TEMP%\trb_cred.txt" echo host=github.com
->>"%TEMP%\trb_cred.txt" echo username=starrnightt2030-oss
+>>"%TEMP%\trb_cred.txt" echo username=mohameddeldawly-code
 >>"%TEMP%\trb_cred.txt" echo.
 git credential reject < "%TEMP%\trb_cred.txt" >nul 2>nul
 del "%TEMP%\trb_cred.txt" >nul 2>nul
@@ -296,13 +296,13 @@ if not errorlevel 1 (
   echo [NOTE] GitHub CLI is installed. If the wrong account persists, run:
   echo          gh auth logout
   echo          gh auth login
-  echo        and sign in as mohameddeldawly-code.
+  echo        and sign in as starrnightt2030-oss.
 )
 echo [OK] Cleared.
 echo.
 echo ============================================================
 echo   A GitHub sign-in window will open now.
-echo   Sign in with the account:   mohameddeldawly-code
+echo   Sign in with the account:   starrnightt2030-oss
 echo   NOT any other account.
 echo ============================================================
 echo.
@@ -313,10 +313,10 @@ echo ============================================================
 echo  [DONE] Update pushed successfully.
 echo.
 echo  Deployment progress (GitHub Actions):
-echo    https://github.com/mohameddeldawly-code/trb-training-center/actions
+echo    https://github.com/starrnightt2030-oss/trb-training-center/actions
 echo.
 echo  Live site (ready in about 1-3 minutes):
-echo    https://mohameddeldawly-code.github.io/trb-training-center/
+echo    https://starrnightt2030-oss.github.io/trb-training-center/
 echo ============================================================
 echo.
 pause

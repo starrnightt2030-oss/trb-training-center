@@ -3,7 +3,7 @@
 # منصة مركز تدريب شركة ترسانة الإسكندرية
 
 ### 🌐 الموقع منشور ويعمل
-**[الموقع العام](https://mohameddeldawly-code.github.io/trb-training-center/)** · **[لوحة الإدارة](https://mohameddeldawly-code.github.io/trb-training-center/admin/login)**
+**[الموقع العام](https://starrnightt2030-oss.github.io/trb-training-center/)** · **[لوحة الإدارة](https://starrnightt2030-oss.github.io/trb-training-center/admin/login)**
 
 يُعاد النشر تلقائياً عند كل دفع إلى الفرع `main`.
 
