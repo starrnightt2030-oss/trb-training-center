@@ -144,7 +144,23 @@ git rev-parse --verify HEAD >nul 2>nul
 if errorlevel 1 goto :ask_message
 git diff --cached --quiet
 if errorlevel 1 goto :ask_message
-echo [INFO] No updates to publish - everything is already up to date.
+
+REM  No new file changes - but commits made earlier may still be unpushed
+REM  (for example when an earlier run stopped before the push step).
+REM  Exiting here would leave the live site stale with no error shown, so
+REM  we check how far ahead of the published branch we are and push those.
+echo [INFO] No new file changes.
+echo        Checking for commits that were never published...
+git fetch origin main >nul 2>nul
+set "AHEAD=0"
+for /f %%N in ('git rev-list --count origin/main..HEAD 2^>nul') do set "AHEAD=%%N"
+if "%AHEAD%"=="0" goto :nothing_to_do
+echo [FOUND] %AHEAD% commit(s) not published yet - publishing them now.
+echo.
+goto :pull
+
+:nothing_to_do
+echo [INFO] Everything is already published - nothing to do.
 echo.
 pause
 exit /b 0
