@@ -47,12 +47,12 @@ create index if not exists books_kind_idx     on public.books(kind, is_published
 create index if not exists books_featured_idx on public.books(is_featured, is_published, sort_order)
   where is_featured;
 
--- ④ بحث نصي يشمل الكلمات المفتاحية
-drop index if exists public.books_search_idx;
-create index if not exists books_search_idx on public.books
-  using gin (to_tsvector('simple',
-    coalesce(title,'') || ' ' || coalesce(description,'') || ' ' ||
-    coalesce(author,'') || ' ' || coalesce(array_to_string(keywords,' '),'')));
+-- ④ فهرسة البحث
+--    ملاحظة: array_to_string ليست IMMUTABLE فلا يقبلها PostgreSQL داخل تعبير
+--    فهرس. لذلك يبقى فهرس النص الحر على العنوان والوصف والمؤلف، وتُفهرس
+--    الكلمات المفتاحية بفهرس GIN مستقل على المصفوفة نفسها — وهو الأنسب
+--    لعمليات الاحتواء (keywords @> ARRAY['كهرباء']).
+create index if not exists books_keywords_idx on public.books using gin (keywords);
 
 -- ⑤ عدّاد فتح الكتاب — دالة محكومة يستدعيها الزائر بلا صلاحية كتابة على الجدول
 create or replace function public.bump_book_views(p_book uuid)
