@@ -70,6 +70,25 @@ set "SB_KEY="
 goto :ask_key
 :key_ok
 
+REM  The dashboard shows the key truncated (sb_secret_iYoP...). Selecting that
+REM  text with the mouse yields a short, useless key and the server then
+REM  answers only "Invalid API key". Catch it here instead.
+set "KEYLEN=0"
+for /f %%L in ('cmd /c echo %SB_KEY%^| find /v /c ""') do rem
+echo %SB_KEY%> "%TEMP%\trb_key.tmp"
+for %%F in ("%TEMP%\trb_key.tmp") do set /a KEYLEN=%%~zF-2
+del "%TEMP%\trb_key.tmp" >nul 2>nul
+if %KEYLEN% GEQ 30 goto :len_ok
+echo.
+echo   [KEY TOO SHORT] Only %KEYLEN% characters - the real key is 40+.
+echo                   You copied the shortened text shown on screen.
+echo                   Use the COPY ICON next to the key instead of
+echo                   selecting the text with the mouse.
+echo.
+set "SB_KEY="
+goto :ask_key
+:len_ok
+
 if not exist "tools" mkdir "tools"
 >"tools\.env.sync" echo # Secret file - do NOT upload to GitHub
 >>"tools\.env.sync" echo SUPABASE_URL=%SB_URL%

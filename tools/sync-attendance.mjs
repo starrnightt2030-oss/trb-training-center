@@ -176,6 +176,19 @@ function assertSecretKey(key, publicKey) {
     );
   }
 
+  // المفاتيح تُعرض مقصوصة في لوحة Supabase (sb_secret_iYoP…)، ومن ينسخ النصّ
+  // الظاهر بدل الضغط على أيقونة النسخ يحصل على أول محارف فقط. الخادم يردّ
+  // عندها «Invalid API key» بلا أي إشارة إلى أن المفتاح ناقص.
+  if (key.length < 30) {
+    throw new Error(
+      `المفتاح المحفوظ ناقص — طوله ${key.length} محرفًا فقط، والمفتاح الكامل يتجاوز ٤٠.\n` +
+      'غالبًا نُسخ النصّ المقصوص الظاهر على الشاشة بدل المفتاح كاملًا.\n\n' +
+      'الصحيح: في لوحة Supabase ▸ Project Settings ▸ API Keys ▸ Secret keys\n' +
+      '        اضغط أيقونة النسخ بجوار المفتاح (لا تحدّد النص بالفأرة).\n' +
+      'ثم احذف الملف tools/.env.sync وشغّل «مزامنة-الغياب.bat» من جديد.'
+    );
+  }
+
   if (publicKey && key === publicKey) {
     throw new Error(
       'المفتاح المحفوظ في tools/.env.sync هو نفسه مفتاح الموقع العام الموجود في .env.\n' +
