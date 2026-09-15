@@ -237,6 +237,107 @@ function wrap(db, driver) {
   };
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   العثور على مجلد «السستم» تلقائيًا
+   ═══════════════════════════════════════════════════════════════════════
+   مسار «السستم» محفوظ في tools/sync.config.json، فإن نُقل المشروع إلى
+   جهاز آخر أو قرص آخر صار المسار المكتوب خاطئًا وتوقّفت المزامنة.
+   بدل مطالبة المستخدم بتحرير ملف إعدادات، نبحث عن المجلد في الأماكن
+   المنطقية: بجوار مجلد المشروع، ثم في المجلد الأب، ثم في جذر القرص.
+   وحين نجده نحدّث ملف الإعدادات تلقائيًا فلا يتكرّر البحث.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '$RECYCLE.BIN',
+  'System Volume Information', 'Windows', 'Program Files', 'Program Files (x86)',
+  'AppData', '.vite', 'ProgramData']);
+
+/** هل هذا المجلد هو مجلد السستم فعلًا؟ */
+function isSchoolSystem(dir) {
+  try { return fs.existsSync(path.join(dir, 'data', 'school.db')); }
+  catch { return false; }
+}
+
+/** بحث محدود العمق عن أي مجلد يحوي data/school.db */
+function scanFor(root, maxDepth = 3) {
+  const hits = [];
+  const walk = (dir, depth) => {
+    if (depth > maxDepth || hits.length >= 8) return;
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (!e.isDirectory() || SKIP_DIRS.has(e.name) || e.name.startsWith('.')) continue;
+      const full = path.join(dir, e.name);
+      if (isSchoolSystem(full)) { hits.push(full); continue; }
+      walk(full, depth + 1);
+    }
+  };
+  walk(root, 1);
+  return hits;
+}
+
+/**
+ * يرجع مسار السستم الصحيح، ويحدّث ملف الإعدادات إن تغيّر.
+ * يرمي خطأً مفهومًا إن لم يُعثر عليه إطلاقًا.
+ */
+function resolveSchoolSystemPath(cfg) {
+  if (cfg.schoolSystemPath && isSchoolSystem(cfg.schoolSystemPath)) return cfg.schoolSystemPath;
+
+  if (cfg.schoolSystemPath) {
+    warn(`المسار المحفوظ للسستم لم يعد موجودًا: ${cfg.schoolSystemPath}`);
+    say('    جارٍ البحث عن مجلد «السستم» تلقائيًا…');
+  }
+
+  const parent = path.dirname(PROJECT_DIR);          // المجلد الحاوي للمشروع
+  const grand  = path.dirname(parent);
+  const root   = path.parse(PROJECT_DIR).root;       // جذر القرص (مثل D:\)
+
+  const direct = [
+    path.join(parent, 'السستم', 'SchoolSystem'),
+    path.join(parent, 'SchoolSystem'),
+    path.join(grand,  'السستم', 'SchoolSystem'),
+    path.join(grand,  'SchoolSystem'),
+    path.join(root,   'السستم', 'SchoolSystem'),
+    path.join(root,   'SchoolSystem'),
+  ].filter(isSchoolSystem);
+
+  const found = direct.length ? direct
+    : [...scanFor(parent, 2), ...scanFor(root, 3)];
+
+  const unique = [...new Set(found)];
+  if (!unique.length) {
+    throw new Error(
+      'تعذّر العثور على مجلد «السستم».\n' +
+      `بُحث في: ${parent}\n        و ${grand}\n        و ${root}\n\n` +
+      'الحل: افتح tools/sync.config.json واكتب المسار الصحيح في "schoolSystemPath"،\n' +
+      'وهو المجلد الذي يحوي بداخله data\\school.db (مجلد SchoolSystem).'
+    );
+  }
+
+  // عند تعدّد النتائج نأخذ الأحدث تعديلًا لقاعدة البيانات
+  unique.sort((a, b) => {
+    const m = (d) => { try { return fs.statSync(path.join(d, 'data', 'school.db')).mtimeMs; } catch { return 0; } };
+    return m(b) - m(a);
+  });
+
+  const picked = unique[0];
+  say(`    ✔ عُثر على «السستم» تلقائيًا: ${picked}`);
+  if (unique.length > 1) {
+    warn(`وُجد أكثر من نسخة (${unique.length}) — اختيرت الأحدث تعديلًا. البقية:`);
+    unique.slice(1).forEach((u) => say(`      · ${u}`));
+  }
+
+  // حفظ المسار الجديد حتى لا يتكرّر البحث
+  try {
+    const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    raw.schoolSystemPath = picked;
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(raw, null, 2) + '\n', 'utf8');
+    say('    حُفظ المسار الجديد في tools/sync.config.json.');
+  } catch { /* الحفظ ليس حرجًا */ }
+
+  cfg.schoolSystemPath = picked;
+  return picked;
+}
+
 async function openDatabase(schoolSystemPath) {
   const dbPath = path.join(schoolSystemPath, 'data', 'school.db');
   if (!fs.existsSync(dbPath)) {
@@ -479,8 +580,9 @@ async function main() {
 
   /* ── ١) فتح قاعدة السستم ── */
   say(`\n[١] فتح قاعدة بيانات السستم…`);
-  detail(`المسار: ${cfg.schoolSystemPath}`);
-  const db = await openDatabase(cfg.schoolSystemPath);
+  const schoolPath = resolveSchoolSystemPath(cfg);
+  detail(`المسار: ${schoolPath}`);
+  const db = await openDatabase(schoolPath);
   say(`    ✔ تم الفتح عبر ${db.driver}`);
 
   /* ── ٢) السنة الدراسية ── */
