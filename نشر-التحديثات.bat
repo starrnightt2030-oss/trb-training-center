@@ -242,11 +242,68 @@ exit /b 0
 :push_failed
 echo.
 echo [ERROR] The push failed.
-echo   Common causes:
-echo     - No internet connection.
-echo     - GitHub asked for a login and it was cancelled.
-echo     - You do not have write access to the repository.
-echo   Your work is safely committed locally; just run this file again.
+echo.
+echo   Look at the message above:
+echo.
+echo   1^) "Permission ... denied to SOME-OTHER-ACCOUNT"  (error 403^)
+echo      Windows is signed in to GitHub with the WRONG account.
+echo      This repository belongs to:  mohameddeldawly-code
+echo      The saved login must be cleared and redone.
+echo.
+echo   2^) "could not resolve host" / timeout
+echo      No internet connection.
+echo.
+echo   3^) A login window appeared and was closed.
+echo      Run this file again and complete the sign-in.
+echo.
+echo   Nothing was lost - your work is committed locally.
+echo.
+set "FIXCRED="
+set /p "FIXCRED=Clear the saved GitHub login and retry now? (y/n): "
+if /i not "%FIXCRED%"=="y" goto :push_give_up
+
+echo.
+echo [STEP] Clearing the saved GitHub login...
+REM  git credential reject needs the request terminated by a blank line.
+>"%TEMP%\trb_cred.txt" echo protocol=https
+>>"%TEMP%\trb_cred.txt" echo host=github.com
+>>"%TEMP%\trb_cred.txt" echo.
+git credential reject < "%TEMP%\trb_cred.txt" >nul 2>nul
+del "%TEMP%\trb_cred.txt" >nul 2>nul
+cmdkey /delete:git:https://github.com >nul 2>nul
+cmdkey /delete:LegacyGeneric:target=git:https://github.com >nul 2>nul
+echo [OK] Cleared.
+echo.
+echo ============================================================
+echo   A GitHub sign-in window will open now.
+echo   Sign in with the account:   mohameddeldawly-code
+echo   NOT any other account.
+echo ============================================================
+echo.
+git push origin main
+if errorlevel 1 goto :push_give_up
+echo.
+echo ============================================================
+echo  [DONE] Update pushed successfully.
+echo.
+echo  Deployment progress (GitHub Actions):
+echo    https://github.com/mohameddeldawly-code/trb-training-center/actions
+echo.
+echo  Live site (ready in about 1-3 minutes):
+echo    https://mohameddeldawly-code.github.io/trb-training-center/
+echo ============================================================
+echo.
+pause
+exit /b 0
+
+:push_give_up
+echo.
+echo [STOPPED] Still not published. Your work is safe locally.
+echo.
+echo   If the wrong-account error keeps coming back, open:
+echo     Control Panel ^> Credential Manager ^> Windows Credentials
+echo   and delete every entry that starts with:  git:https://github.com
+echo   Then run this file again.
 echo.
 pause
 exit /b 1
