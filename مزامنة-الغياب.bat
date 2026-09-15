@@ -51,8 +51,24 @@ echo   Project URL: %SB_URL%
 echo.
 
 set "SB_KEY="
-set /p "SB_KEY=Paste the secret key here (sb_secret_... or eyJ...): "
+:ask_key
+set /p "SB_KEY=Paste the SECRET key here (starts with sb_secret_): "
 if "%SB_KEY%"=="" goto :no_key
+
+REM  The publishable key is the one most people copy by mistake. It cannot
+REM  write to the database, and the failure it causes later is cryptic
+REM  ("row-level security policy"), so we reject it right here.
+echo %SB_KEY% | findstr /b /c:"sb_publishable_" >nul
+if errorlevel 1 goto :key_ok
+echo.
+echo   [WRONG KEY] That is the PUBLISHABLE key - it cannot write data.
+echo               You need the SECRET key from the same page:
+echo               Project Settings ^> API Keys ^> Secret keys ^> default
+echo               Reveal it, copy it, and paste it here.
+echo.
+set "SB_KEY="
+goto :ask_key
+:key_ok
 
 if not exist "tools" mkdir "tools"
 >"tools\.env.sync" echo # Secret file - do NOT upload to GitHub

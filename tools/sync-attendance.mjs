@@ -151,8 +151,55 @@ function loadCredentials() {
   const envSync = readEnvFile(path.join(TOOLS_DIR, '.env.sync'));
   const envProj = readEnvFile(path.join(PROJECT_DIR, '.env'));
   const url = (envSync.SUPABASE_URL || process.env.SUPABASE_URL || envProj.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
-  const key = envSync.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-  return { url, key };
+  const key = (envSync.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || '').trim();
+  return { url, key, publicKey: (envProj.VITE_SUPABASE_ANON_KEY || '').trim() };
+}
+
+/**
+ * التحقق من نوع المفتاح قبل أي اتصال.
+ *
+ * المفتاح العام (sb_publishable_… أو anon) لا يتجاوز سياسات الحماية RLS،
+ * فلو استُخدم في المزامنة يفشل أول إدراج برسالة غامضة:
+ *   42501 new row violates row-level security policy
+ * والاكتشاف المبكر هنا يوفّر على المستخدم تتبّع خطأ لا علاقة له بسببه.
+ */
+function assertSecretKey(key, publicKey) {
+  if (!key) return;
+
+  if (key.startsWith('sb_publishable_')) {
+    throw new Error(
+      'المفتاح المحفوظ في tools/.env.sync هو المفتاح العام (Publishable) لا المفتاح السرّي.\n' +
+      'المفتاح العام لا يملك صلاحية الكتابة — لذلك ترفضه قاعدة البيانات.\n\n' +
+      'الصحيح: افتح لوحة Supabase ▸ Project Settings ▸ API Keys ▸ Secret keys ▸ default\n' +
+      '        اكشف المفتاح وانسخه (يبدأ بـ sb_secret_).\n' +
+      'ثم احذف الملف tools/.env.sync وشغّل «مزامنة-الغياب.bat» من جديد.'
+    );
+  }
+
+  if (publicKey && key === publicKey) {
+    throw new Error(
+      'المفتاح المحفوظ في tools/.env.sync هو نفسه مفتاح الموقع العام الموجود في .env.\n' +
+      'المزامنة تحتاج المفتاح السرّي (Secret / service_role) لا العام.\n' +
+      'احذف tools/.env.sync وشغّل «مزامنة-الغياب.bat» من جديد بالمفتاح الصحيح.'
+    );
+  }
+
+  // مفتاح JWT قديم: نقرأ الدور المكتوب داخله للتأكد أنه service_role لا anon
+  if (key.startsWith('eyJ')) {
+    try {
+      const body = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8'));
+      if (body.role && body.role !== 'service_role') {
+        throw new Error(
+          `المفتاح المحفوظ من نوع «${body.role}» لا «service_role».\n` +
+          'المزامنة تحتاج مفتاح service_role لأنه وحده يتجاوز سياسات الحماية.\n' +
+          'احذف tools/.env.sync وشغّل «مزامنة-الغياب.bat» من جديد بالمفتاح الصحيح.'
+        );
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('service_role')) throw e;
+      /* تعذّر فكّ المفتاح — نتركه ليحكم عليه الخادم */
+    }
+  }
 }
 
 /* ───────────────────────────── فتح قاعدة السستم ────────────────────────── */
@@ -397,7 +444,8 @@ async function main() {
   say('════════════════════════════════════════════════════════');
 
   const cfg = loadConfig();
-  const { url, key } = loadCredentials();
+  const { url, key, publicKey } = loadCredentials();
+  assertSecretKey(key, publicKey);
 
   let remote = null;
   if (url && key) {
@@ -412,7 +460,7 @@ async function main() {
       'أنشئ ملف tools/.env.sync بالمحتوى التالي:\n' +
       '  SUPABASE_URL=https://xxxx.supabase.co\n' +
       '  SUPABASE_SERVICE_KEY=<مفتاح service_role>\n' +
-      'المفتاح من: Supabase ▸ Project Settings ▸ API ▸ service_role'
+      'المفتاح من: Supabase ▸ Project Settings ▸ API Keys ▸ Secret keys ▸ default'
     );
   }
 
