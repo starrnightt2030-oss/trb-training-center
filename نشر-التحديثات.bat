@@ -190,7 +190,16 @@ exit /b 1
 
 REM ---------- 10) Pull (rebase) ----------
 :pull
-echo [STEP] Syncing with GitHub (git pull --rebase origin main)...
+echo [STEP] Checking GitHub for newer commits...
+git fetch origin main >nul 2>nul
+set "BEHIND=0"
+for /f %%N in ('git rev-list --count HEAD..origin/main 2^>nul') do set "BEHIND=%%N"
+if "%BEHIND%"=="0" (
+  echo [OK] Nothing new on GitHub - no rebase needed.
+  echo.
+  goto :push
+)
+echo [STEP] %BEHIND% new commit(s) on GitHub - rebasing onto them...
 git pull --rebase origin main
 if errorlevel 1 goto :pull_failed
 echo [OK] In sync with the remote branch.
