@@ -263,15 +263,41 @@ set /p "FIXCRED=Clear the saved GitHub login and retry now? (y/n): "
 if /i not "%FIXCRED%"=="y" goto :push_give_up
 
 echo.
+echo [DIAGNOSTIC] Where the saved login actually lives:
+git config --show-origin --get-all credential.helper
+echo.
 echo [STEP] Clearing the saved GitHub login...
 REM  git credential reject needs the request terminated by a blank line.
+REM  We reject it twice: once generically, and once for the specific
+REM  account, because a helper can key the entry either way.
 >"%TEMP%\trb_cred.txt" echo protocol=https
 >>"%TEMP%\trb_cred.txt" echo host=github.com
+>>"%TEMP%\trb_cred.txt" echo.
+git credential reject < "%TEMP%\trb_cred.txt" >nul 2>nul
+>"%TEMP%\trb_cred.txt" echo protocol=https
+>>"%TEMP%\trb_cred.txt" echo host=github.com
+>>"%TEMP%\trb_cred.txt" echo username=starrnightt2030-oss
 >>"%TEMP%\trb_cred.txt" echo.
 git credential reject < "%TEMP%\trb_cred.txt" >nul 2>nul
 del "%TEMP%\trb_cred.txt" >nul 2>nul
 cmdkey /delete:git:https://github.com >nul 2>nul
 cmdkey /delete:LegacyGeneric:target=git:https://github.com >nul 2>nul
+
+REM  Some setups keep the token in a plain file instead of Credential Manager.
+if exist "%USERPROFILE%\.git-credentials" (
+  echo [STEP] Found %USERPROFILE%\.git-credentials - backing it up and removing.
+  move /y "%USERPROFILE%\.git-credentials" "%USERPROFILE%\.git-credentials.backup" >nul 2>nul
+)
+
+REM  If the GitHub CLI is the credential helper, its own token wins over
+REM  everything above and must be switched separately.
+where gh >nul 2>nul
+if not errorlevel 1 (
+  echo [NOTE] GitHub CLI is installed. If the wrong account persists, run:
+  echo          gh auth logout
+  echo          gh auth login
+  echo        and sign in as mohameddeldawly-code.
+)
 echo [OK] Cleared.
 echo.
 echo ============================================================
