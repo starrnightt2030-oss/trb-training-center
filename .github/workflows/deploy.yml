@@ -32,11 +32,18 @@ jobs:
       - name: فحص الأنواع
         run: npm run typecheck
 
+      # القيم الثلاث أدناه لها قيمة احتياطية مكتوبة هنا، فيعمل النشر فور
+      # دفع الكود بلا أي ضبط يدوي للمستودع. وإن عُرّف متغيّر بنفس الاسم في
+      # Settings ▸ Secrets and variables ▸ Actions ▸ Variables فهو الذي يُستخدم.
+      #
+      # المفتاح المكتوب هنا هو المفتاح العام (publishable) وحده، وهو مُصمَّم
+      # للعمل داخل المتصفح ويظهر أصلًا في كود الموقع المنشور — الحماية الحقيقية
+      # من سياسات RLS داخل قاعدة البيانات. لا يُكتب مفتاح service_role هنا أبدًا.
       - name: البناء
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
-          VITE_BASE: ${{ vars.VITE_BASE }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://zzvppaaitnajwfbguwbt.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9tRiTSvlrBljq_G5A6oXcw_euu9gYaw' }}
+          VITE_BASE: ${{ vars.VITE_BASE || '/trb-training-center/' }}
         run: npm run build
 
       - name: تهيئة توجيه التطبيق أحادي الصفحة
