@@ -3,8 +3,8 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import clsx from 'clsx';
 import {
-  BookOpen, ChevronDown, Menu, MessageSquareWarning, Phone, PlayCircle,
-  Images, Newspaper, GraduationCap, Info, Mail, Users, X, Search,
+  BookOpen, ChevronDown, Phone, PlayCircle,
+  Images, Newspaper, GraduationCap, Info, Mail, Users, Search,
 } from 'lucide-react';
 import { useSetting } from '@/hooks/useSettings';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -34,15 +34,10 @@ const NAV: Array<Item & { children?: Item[] }> = [
   { to: '/contact', label: 'اتصل بنا', icon: Mail },
 ];
 
-const QUICK: Item[] = [
-  { to: '/complaints', label: 'الشكاوى والمقترحات', icon: MessageSquareWarning },
-  { to: '/parent', label: 'بوابة ولي الأمر', icon: Users },
-];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function Header() {
-  const [open, setOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef<number | undefined>(undefined);
@@ -56,7 +51,7 @@ export function Header() {
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 26, restDelta: 0.001 });
 
-  useEffect(() => { setOpen(false); setOpenMenu(null); }, [pathname]);
+  useEffect(() => { setOpenMenu(null); }, [pathname]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -65,14 +60,8 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // منع تمرير الصفحة خلف قائمة الموبايل
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); setOpenMenu(null); } };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenMenu(null); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -208,11 +197,6 @@ export function Header() {
               className="btn btn-md btn-primary hidden sm:inline-flex">
               <Users className="h-4 w-4" aria-hidden /> بوابة ولي الأمر
             </Link>
-            <button onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="mobile-menu"
-              aria-label={open ? 'إغلاق القائمة' : 'فتح القائمة'}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-line-2 text-ink xl:hidden">
-              {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
-            </button>
           </div>
         </div>
 
@@ -222,48 +206,6 @@ export function Header() {
           aria-hidden />
       </div>
 
-      {/* قائمة الموبايل */}
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 top-0 z-40 bg-navy-950/60 backdrop-blur-sm xl:hidden" aria-hidden />
-            <motion.div
-              id="mobile-menu"
-              initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.3, ease: EASE }}
-              className="relative z-50 max-h-[calc(100vh-var(--header-h))] overflow-y-auto border-b border-line bg-surface shadow-float xl:hidden">
-              <nav className="container-page grid gap-1 py-4" aria-label="التنقل على الأجهزة الصغيرة">
-                {NAV.flatMap((n) => (n.children?.length ? n.children : [n])).map((n) => (
-                  <NavLink key={n.to + n.label} to={n.to} end={n.to === '/'}
-                    className={({ isActive }) => clsx(
-                      'flex items-center gap-3 rounded-xl px-4 py-3.5 text-[15px] font-semibold transition',
-                      isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-surface-3',
-                    )}>
-                    {n.icon ? <n.icon className="h-[18px] w-[18px] opacity-70" aria-hidden /> : <span className="w-[18px]" />}
-                    {n.label}
-                  </NavLink>
-                ))}
-                <div className="mt-3 grid gap-2 border-t border-line pt-4 sm:grid-cols-2">
-                  {QUICK.map((q) => (
-                    <Link key={q.to} to={q.to} className="btn btn-md btn-primary w-full">
-                      {q.icon ? <q.icon className="h-4 w-4" aria-hidden /> : null} {q.label}
-                    </Link>
-                  ))}
-                </div>
-                {cleanPhone && (
-                  <a href={`tel:${cleanPhone}`} className="btn btn-md btn-ghost mt-2 w-full">
-                    <Phone className="h-4 w-4" aria-hidden /> <span className="nums-latn">{cleanPhone}</span>
-                  </a>
-                )}
-              </nav>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </header>
   );
 }

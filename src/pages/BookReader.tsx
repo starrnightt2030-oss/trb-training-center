@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
-import { BookOpen, Download, FileText, Layers, Tag, User } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { BookOpen, ChevronRight, Download, FileText, Layers, Tag, User } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHeader } from './PageHeader';
 import { PdfViewer } from '@/components/shared/PdfViewer';
@@ -55,17 +55,34 @@ export default function BookReader() {
 
   return (
     <>
-      <PageHeader title={b.title} description={b.description ?? undefined}
-        breadcrumb={[{ label: 'المكتبة الإلكترونية', to: '/library' }, { label: b.title }]}
-        action={b.pdf_url && b.allow_download ? (
-          <a href={b.pdf_url} download target="_blank" rel="noopener noreferrer" className="btn btn-md btn-gold">
-            <Download className="h-4 w-4" aria-hidden /> تحميل PDF
-          </a>
-        ) : undefined} />
+      {/* ترويسة كاملة على الشاشات الواسعة فقط — على الجوال تُستبدل بسطر مضغوط
+          حتى يبدأ الكتاب من أعلى الشاشة بدل أن يُدفن أسفلها */}
+      <div className="hidden sm:block">
+        <PageHeader title={b.title} description={b.description ?? undefined}
+          breadcrumb={[{ label: 'المكتبة الإلكترونية', to: '/library' }, { label: b.title }]}
+          action={b.pdf_url && b.allow_download ? (
+            <a href={b.pdf_url} download target="_blank" rel="noopener noreferrer" className="btn btn-md btn-gold">
+              <Download className="h-4 w-4" aria-hidden /> تحميل PDF
+            </a>
+          ) : undefined} />
+      </div>
 
-      <div className="container-page py-8">
-        {/* شريط بيانات الكتاب */}
-        <div className="card mb-6 flex flex-wrap items-center gap-x-8 gap-y-3 p-4">
+      <div className="sticky top-[var(--header-h)] z-30 border-b border-line bg-surface/92 backdrop-blur sm:hidden">
+        <div className="container-page flex items-center gap-2.5 py-2.5">
+          <Link to="/library" aria-label="رجوع إلى المكتبة"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line-2 text-ink-2">
+            <ChevronRight className="h-[18px] w-[18px]" aria-hidden />
+          </Link>
+          <h1 className="clamp-1 flex-1 text-[14.5px] font-bold text-ink">{b.title}</h1>
+          <span className={clsx('shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-bold', kind.tone)}>
+            {kind.short}
+          </span>
+        </div>
+      </div>
+
+      <div className="container-page py-4 sm:py-8">
+        {/* شريط بيانات الكتاب — تحت القارئ على الجوال */}
+        <div className="card order-2 mb-6 hidden flex-wrap items-center gap-x-8 gap-y-3 p-4 sm:flex">
           <span className={clsx('inline-flex items-center rounded-full border px-3 py-1 text-[12.5px] font-bold', kind.tone)}>
             {kind.label}
           </span>
@@ -84,7 +101,19 @@ export default function BookReader() {
         </div>
 
         {b.pdf_url ? (
-          <PdfViewer url={b.pdf_url} title={b.title} allowDownload={b.allow_download} storageKey={b.id} />
+          <>
+            <PdfViewer url={b.pdf_url} title={b.title} allowDownload={b.allow_download} storageKey={b.id} />
+
+            {/* بيانات الكتاب على الجوال — بعد القارئ لا قبله */}
+            <dl className="card mt-4 grid grid-cols-2 gap-px overflow-hidden bg-line sm:hidden">
+              {meta.slice(0, 4).map((m) => (
+                <div key={m.label} className="bg-surface p-3">
+                  <dt className="text-[11.5px] font-bold text-muted">{m.label}</dt>
+                  <dd className="nums-latn mt-0.5 clamp-1 text-[13.5px] font-semibold text-ink">{m.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </>
         ) : (
           <EmptyState icon={<BookOpen className="h-7 w-7" />} title="لم يُرفع ملف الكتاب بعد"
             description="يُرفع ملف PDF لهذا الكتاب من لوحة الإدارة ▸ المكتبة الإلكترونية." />

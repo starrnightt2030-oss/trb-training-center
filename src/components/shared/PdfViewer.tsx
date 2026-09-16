@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
 import {
   BookOpen, Bookmark, ChevronLeft, ChevronRight, Columns2, Download, FileText,
-  Loader2, Maximize2, Minimize2, Minus, Plus, RotateCw, Search, Rows3, X, PanelRightOpen,
+  Loader2, Maximize2, Minimize2, Minus, MoreHorizontal, Plus, RotateCw, Search, Rows3, X, PanelRightOpen,
 } from 'lucide-react';
 import { normalizeArabic, openPdf, pageAspect, pageText } from '@/lib/pdf';
 import type { PdfDocument } from '@/lib/pdf';
@@ -44,6 +44,8 @@ export function PdfViewer({ url, title, allowDownload, storageKey }: Props) {
   const [error, setError]   = useState<string | null>(null);
   const [full, setFull]     = useState(false);
   const [panel, setPanel]   = useState<'none' | 'thumbs' | 'search'>('none');
+  const [tools, setTools]   = useState(false);   // قائمة الأدوات الثانوية على الجوال
+  const [showHint, setHint] = useState(true);    // تلميح التقليب — يختفي وحده
   const [stage, setStage]   = useState({ w: 900, h: 600 });
 
   const [query, setQuery]   = useState('');
@@ -101,6 +103,13 @@ export function PdfViewer({ url, title, allowDownload, storageKey }: Props) {
     }, 400);
     return () => window.clearTimeout(t);
   }, [lsKey, page, marks, mode, numPages]);
+
+  /* التلميح يظهر لحظات ثم ينصرف عن الطريق */
+  useEffect(() => {
+    if (loading) return;
+    const t = window.setTimeout(() => setHint(false), 5200);
+    return () => window.clearTimeout(t);
+  }, [loading]);
 
   /* ── قياس المسرح ── */
   useEffect(() => {
@@ -208,17 +217,17 @@ export function PdfViewer({ url, title, allowDownload, storageKey }: Props) {
       {/* ═══ شريط الأدوات ═══ */}
       <div className="reader-toolbar justify-between border-b px-2.5 py-2">
         {/* التنقل */}
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           <IconBtn label="الصفحة السابقة" onClick={() => goTo(page - (effectiveMode === 'book' ? 2 : 1))} disabled={page <= 1}>
             <ChevronRight className="h-4 w-4" aria-hidden />
           </IconBtn>
-          <div className="flex items-center gap-1 px-1">
+          <div className="flex items-center gap-1 px-0.5 sm:px-1">
             <input
               value={page}
               onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, '')); if (n) goTo(n); }}
               inputMode="numeric" aria-label="رقم الصفحة"
-              className="nums-latn h-9 w-14 rounded-lg border border-line-2 bg-surface text-center text-[13.5px] font-bold text-ink" />
-            <span className="nums-latn text-[13px] text-muted">/ {numPages || '—'}</span>
+              className="nums-latn h-9 w-11 rounded-lg border border-line-2 bg-surface text-center text-[13px] font-bold text-ink sm:w-14 sm:text-[13.5px]" />
+            <span className="nums-latn hidden text-[13px] text-muted xs:inline sm:inline">/ {numPages || '—'}</span>
           </div>
           <IconBtn label="الصفحة التالية" onClick={() => goTo(page + (effectiveMode === 'book' ? 2 : 1))} disabled={page >= numPages}>
             <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -226,13 +235,13 @@ export function PdfViewer({ url, title, allowDownload, storageKey }: Props) {
         </div>
 
         {/* أوضاع العرض */}
-        <div className="flex items-center gap-1 rounded-xl border border-line bg-surface-3 p-1">
+        <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-line bg-surface-3 p-1 sm:gap-1">
           {MODES.map((m) => (
             <button key={m.id} type="button" onClick={() => setMode(m.id)}
               disabled={m.id === 'book' && narrow}
               aria-pressed={mode === m.id}
               className={clsx(
-                'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold transition disabled:opacity-35',
+                'flex h-8 items-center gap-1.5 rounded-lg px-2 text-[12.5px] font-semibold transition disabled:opacity-35 sm:px-2.5',
                 mode === m.id ? 'bg-surface text-accent shadow-card' : 'text-muted hover:text-ink',
               )}>
               <m.icon className="h-[15px] w-[15px]" aria-hidden />
@@ -242,46 +251,98 @@ export function PdfViewer({ url, title, allowDownload, storageKey }: Props) {
         </div>
 
         {/* أدوات */}
-        <div className="flex items-center gap-1">
+        <div className="relative flex items-center gap-1">
           <IconBtn label="بحث داخل الكتاب" active={panel === 'search'}
             onClick={() => setPanel((p) => (p === 'search' ? 'none' : 'search'))}>
             <Search className="h-4 w-4" aria-hidden />
           </IconBtn>
-          <IconBtn label="مصغّرات الصفحات" active={panel === 'thumbs'}
-            onClick={() => setPanel((p) => (p === 'thumbs' ? 'none' : 'thumbs'))}>
-            <PanelRightOpen className="h-4 w-4" aria-hidden />
-          </IconBtn>
-          <IconBtn label={marks.includes(page) ? 'إزالة العلامة' : 'وضع علامة مرجعية'} active={marks.includes(page)} onClick={toggleMark}>
-            <Bookmark className="h-4 w-4" aria-hidden />
-          </IconBtn>
-          <span className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden />
-          <IconBtn label="تصغير" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.15).toFixed(2)))}>
-            <Minus className="h-4 w-4" aria-hidden />
-          </IconBtn>
-          <button type="button" onClick={() => setZoom(1)} title="إعادة ضبط التكبير"
-            className="nums-latn h-9 w-14 rounded-lg text-center text-[12.5px] font-bold text-ink-2 hover:bg-surface-3">
-            {Math.round(zoom * 100)}%
-          </button>
-          <IconBtn label="تكبير" onClick={() => setZoom((z) => Math.min(3, +(z + 0.15).toFixed(2)))}>
-            <Plus className="h-4 w-4" aria-hidden />
-          </IconBtn>
-          <IconBtn label="تدوير الصفحة" onClick={() => setRot((r) => (r + 90) % 360)}>
-            <RotateCw className="h-4 w-4" aria-hidden />
-          </IconBtn>
-          <IconBtn label={full ? 'إنهاء ملء الشاشة' : 'ملء الشاشة'} onClick={toggleFull}>
-            {full ? <Minimize2 className="h-4 w-4" aria-hidden /> : <Maximize2 className="h-4 w-4" aria-hidden />}
-          </IconBtn>
-          {allowDownload && (
-            <a href={url} download target="_blank" rel="noopener noreferrer"
-              className="btn btn-sm btn-primary mr-1">
-              <Download className="h-4 w-4" aria-hidden /> <span className="hidden sm:inline">تحميل</span>
-            </a>
-          )}
+
+          {/* الأدوات الثانوية — ظاهرة على الشاشات الواسعة */}
+          <span className="hidden items-center gap-1 sm:flex">
+            <IconBtn label="مصغّرات الصفحات" active={panel === 'thumbs'}
+              onClick={() => setPanel((p) => (p === 'thumbs' ? 'none' : 'thumbs'))}>
+              <PanelRightOpen className="h-4 w-4" aria-hidden />
+            </IconBtn>
+            <IconBtn label={marks.includes(page) ? 'إزالة العلامة' : 'وضع علامة مرجعية'} active={marks.includes(page)} onClick={toggleMark}>
+              <Bookmark className="h-4 w-4" aria-hidden />
+            </IconBtn>
+            <span className="mx-1 h-6 w-px bg-line" aria-hidden />
+            <IconBtn label="تصغير" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.15).toFixed(2)))}>
+              <Minus className="h-4 w-4" aria-hidden />
+            </IconBtn>
+            <button type="button" onClick={() => setZoom(1)} title="إعادة ضبط التكبير"
+              className="nums-latn h-9 w-14 rounded-lg text-center text-[12.5px] font-bold text-ink-2 hover:bg-surface-3">
+              {Math.round(zoom * 100)}%
+            </button>
+            <IconBtn label="تكبير" onClick={() => setZoom((z) => Math.min(3, +(z + 0.15).toFixed(2)))}>
+              <Plus className="h-4 w-4" aria-hidden />
+            </IconBtn>
+            <IconBtn label="تدوير الصفحة" onClick={() => setRot((r) => (r + 90) % 360)}>
+              <RotateCw className="h-4 w-4" aria-hidden />
+            </IconBtn>
+            <IconBtn label={full ? 'إنهاء ملء الشاشة' : 'ملء الشاشة'} onClick={toggleFull}>
+              {full ? <Minimize2 className="h-4 w-4" aria-hidden /> : <Maximize2 className="h-4 w-4" aria-hidden />}
+            </IconBtn>
+            {allowDownload && (
+              <a href={url} download target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary mr-1">
+                <Download className="h-4 w-4" aria-hidden /> تحميل
+              </a>
+            )}
+          </span>
+
+          {/* على الجوال: زرّ واحد يجمع بقيّة الأدوات */}
+          <span className="sm:hidden">
+            <IconBtn label="أدوات أخرى" active={tools} onClick={() => setTools((v) => !v)}>
+              <MoreHorizontal className="h-4 w-4" aria-hidden />
+            </IconBtn>
+          </span>
+
+          <AnimatePresence>
+            {tools && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.2, ease: EASE }}
+                className="absolute left-0 top-[calc(100%+8px)] z-50 w-[248px] rounded-2xl border border-line bg-surface p-2 shadow-float sm:hidden">
+                <div className="mb-2 flex items-center justify-between rounded-xl bg-surface-3 p-1.5">
+                  <button onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.15).toFixed(2)))}
+                    aria-label="تصغير" className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface text-ink-2">
+                    <Minus className="h-4 w-4" aria-hidden />
+                  </button>
+                  <button onClick={() => setZoom(1)}
+                    className="nums-latn text-[13px] font-bold text-ink">{Math.round(zoom * 100)}%</button>
+                  <button onClick={() => setZoom((z) => Math.min(3, +(z + 0.15).toFixed(2)))}
+                    aria-label="تكبير" className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface text-ink-2">
+                    <Plus className="h-4 w-4" aria-hidden />
+                  </button>
+                </div>
+                {([
+                  ['مصغّرات الصفحات', PanelRightOpen, () => { setPanel((p) => (p === 'thumbs' ? 'none' : 'thumbs')); setTools(false); }],
+                  [marks.includes(page) ? 'إزالة العلامة المرجعية' : 'وضع علامة مرجعية', Bookmark, () => { toggleMark(); setTools(false); }],
+                  ['تدوير الصفحة', RotateCw, () => setRot((r) => (r + 90) % 360)],
+                  [full ? 'إنهاء ملء الشاشة' : 'ملء الشاشة', full ? Minimize2 : Maximize2, () => { toggleFull(); setTools(false); }],
+                ] as Array<[string, typeof Bookmark, () => void]>).map(([label, Icon, fn]) => (
+                  <button key={label} onClick={fn}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-[13.5px] font-semibold text-ink-2 transition hover:bg-surface-3">
+                    <Icon className="h-[18px] w-[18px] text-accent" aria-hidden /> {label}
+                  </button>
+                ))}
+                {allowDownload && (
+                  <a href={url} download target="_blank" rel="noopener noreferrer" onClick={() => setTools(false)}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-semibold text-accent transition hover:bg-surface-3">
+                    <Download className="h-[18px] w-[18px]" aria-hidden /> تحميل الكتاب
+                  </a>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       {/* ═══ المسرح ═══ */}
-      <div className="relative flex" style={{ height: full ? 'calc(100vh - 58px)' : 'min(78vh, 900px)' }}>
+      <div className="relative flex"
+        style={{ height: full ? 'calc(100dvh - 58px)' : 'clamp(420px, calc(100dvh - 15rem), 900px)' }}>
         {/* اللوحة الجانبية */}
         <AnimatePresence initial={false}>
           {panel !== 'none' && (
@@ -414,11 +475,16 @@ export function PdfViewer({ url, title, allowDownload, storageKey }: Props) {
           )}
 
           {/* تلميح التنقّل */}
-          {!loading && effectiveMode === 'book' && (
-            <p className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-[11.5px] text-white/45">
-              اسحب أو انقر على حافة الصفحة للتقليب — أو استخدم أسهم لوحة المفاتيح
-            </p>
-          )}
+          <AnimatePresence>
+            {!loading && showHint && effectiveMode !== 'scroll' && (
+              <motion.p
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="pointer-events-none absolute inset-x-0 bottom-3 mx-auto w-fit rounded-full bg-navy-950/70 px-4 py-1.5 text-center text-[11.5px] text-white/80 backdrop-blur">
+                اسحب الصفحة بإصبعك للتقليب، أو انقر على حافتها
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

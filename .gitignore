@@ -15,3 +15,6 @@ tools/sync.config.json
 
 # موارد PDF.js تُنسخ آلياً عند البناء
 public/pdfjs/
+
+# أرشيفات معاينة مؤقتة
+_preview*.tgz

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { registerServiceWorker } from './lib/pwa';
 import './index.css';
 
 const el = document.getElementById('root');
@@ -11,3 +12,6 @@ createRoot(el).render(
     <App />
   </StrictMode>,
 );
+
+// يُثبّت التطبيق على الجوال ويُسرّع الفتح عند ضعف الشبكة
+registerServiceWorker();

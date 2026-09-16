@@ -1,0 +1,41 @@
+{
+  "name": "مركز تدريب شركة ترسانة الإسكندرية",
+  "short_name": "مركز التدريب",
+  "description": "البوابة الرقمية الرسمية — التخصصات والمكتبة الإلكترونية والفيديوهات والأخبار وبوابة ولي الأمر",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0a1c38",
+  "theme_color": "#0a1c38",
+  "categories": ["education", "books"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "المكتبة الإلكترونية",
+      "short_name": "المكتبة",
+      "url": "./library",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "بوابة ولي الأمر",
+      "short_name": "ولي الأمر",
+      "url": "./parent",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "الشكاوى والمقترحات",
+      "short_name": "الشكاوى",
+      "url": "./complaints",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    }
+  ]
+}

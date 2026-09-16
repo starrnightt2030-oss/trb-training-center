@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, MessageCircle, Plus, MessageSquareWarning, Users, X } from 'lucide-react';
 import { useSetting } from '@/hooks/useSettings';
@@ -9,6 +9,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** أزرار عائمة: عودة لأعلى · واتساب · اختصارات الخدمات */
 export function FloatingActions() {
+  const { pathname } = useLocation();
   const [showTop, setShowTop] = useState(false);
   const [open, setOpen] = useState(false);
   const wa = useSetting('contact.whatsapp', '');
@@ -23,13 +24,20 @@ export function FloatingActions() {
     return () => window.removeEventListener('scroll', on);
   }, []);
 
+  // صفحة قراءة الكتاب تحتاج كل المساحة — الأزرار العائمة تزاحم القارئ
+  const hidden = /^\/library\/book\//.test(pathname);
+
   const items = [
     { to: '/complaints', label: 'شكوى أو مقترح', icon: MessageSquareWarning },
     { to: '/parent', label: 'بوابة ولي الأمر', icon: Users },
   ];
 
+  if (hidden) return null;
+
   return (
-    <div className="pointer-events-none fixed bottom-5 left-4 z-40 flex flex-col items-start gap-3 sm:bottom-7 sm:left-6">
+    <div
+      className="pointer-events-none fixed left-4 z-40 flex flex-col items-start gap-3 sm:left-6"
+      style={{ bottom: 'calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom))' }}>
       <AnimatePresence>
         {showTop && (
           <motion.button

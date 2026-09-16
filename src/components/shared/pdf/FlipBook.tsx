@@ -8,9 +8,16 @@ import type { PdfDocument } from '@/lib/pdf';
  * كتاب بتقليب صفحات واقعي — مضبوط على اتجاه القراءة العربية.
  *
  * النموذج الورقي: الورقة رقم i تحمل الصفحة (2i+1) على وجهها و(2i+2) على ظهرها.
- * في الكتاب العربي يقع وجه الورقة على اليسار وظهرها على اليمين، والتقدّم
- * يتم بقلب الورقة اليسرى نحو اليمين حول الكعب في المنتصف — وهو ما يحاكيه
- * الدوران ثلاثي الأبعاد أدناه، مع ظلّ يشتدّ عند منتصف الطيّة كما في الورق.
+ * في الكتاب العربي يقع وجه الورقة على اليسار وظهرها على اليمين، والتقدّم يتم
+ * بقلب الورقة اليسرى نحو اليمين حول الكعب في المنتصف.
+ *
+ * ── التفاعل ──────────────────────────────────────────────────────────────
+ * السحب يتتبّع الإصبع لحظةً بلحظة (Pointer Events تغطي اللمس والفأرة معًا):
+ * تدور الورقة بمقدار ما سحبت، فإن تجاوز السحب الثلث أو انطلق بسرعة كافية
+ * أكملت الدورة، وإلا عادت إلى مكانها. هذا هو الفارق بين «تقليب يعمل» و
+ * «تقليب يستجيب»، وهو ما كان ناقصًا على الجوال: وضع الصفحة الواحدة — وهو
+ * الوضع الافتراضي على الشاشات الضيقة — لم يكن فيه تقليب أصلًا.
+ * ────────────────────────────────────────────────────────────────────────
  */
 
 interface Props {
@@ -29,23 +36,31 @@ interface Props {
   className?: string;
 }
 
-const DURATION = 0.78;
+const DURATION = 0.72;
 const EASE = [0.36, 0.05, 0.22, 1] as const;
+/** نسبة السحب التي تُعدّ التزامًا بالتقليب */
+const COMMIT = 0.32;
+/** سرعة السحب (بكسل/ثانية) التي تُكمل التقليب مهما كانت المسافة */
+const FLING = 480;
+
+type Dir = 'next' | 'prev';
 
 export function FlipBook({
   doc, numPages, page, onPageChange, pageWidth, pageHeight,
   single = false, textLayer = false, highlight, className,
 }: Props) {
   const reduce = useReducedMotion();
-  const [flipping, setFlipping] = useState<'next' | 'prev' | null>(null);
+  const [flipping, setFlipping] = useState<Dir | null>(null);
   const angle = useMotionValue(0);
   const busy = useRef(false);
-  const touchX = useRef<number | null>(null);
+
+  /* حالة السحب */
+  const drag = useRef<{ id: number; x: number; t: number; dir: Dir | null; moved: boolean } | null>(null);
 
   /** عدد الأوراق، وموضع الورقة الحالية */
-  const leaf = Math.floor(Math.max(0, page - 1) / 2);      // الورقة المفتوحة حالياً
-  const leftPage  = leaf * 2 + 1;                           // وجه الورقة (يسار)
-  const rightPage = leaf * 2;                               // ظهر الورقة السابقة (يمين)
+  const leaf = Math.floor(Math.max(0, page - 1) / 2);
+  const leftPage  = leaf * 2 + 1;
+  const rightPage = leaf * 2;
 
   const at = (n: number) => (n >= 1 && n <= numPages ? n : 0);
 
@@ -55,40 +70,94 @@ export function FlipBook({
   /* ظلّ الطيّة: يبلغ ذروته عند ٩٠ درجة */
   const foldShade = useTransform(angle, (a) => {
     const t = Math.min(1, Math.abs(a) / 180);
-    return 0.55 * Math.sin(t * Math.PI);
+    return 0.5 * Math.sin(t * Math.PI);
   });
   const spineShade = useTransform(angle, (a) => {
     const t = Math.min(1, Math.abs(a) / 180);
-    return 0.35 * Math.sin(t * Math.PI);
+    return 0.32 * Math.sin(t * Math.PI);
   });
 
-  const go = useCallback(async (dir: 'next' | 'prev') => {
+  const commit = useCallback((dir: Dir) => {
+    if (single) {
+      onPageChange(dir === 'next' ? Math.min(numPages, page + 1) : Math.max(1, page - 1));
+    } else {
+      onPageChange(dir === 'next'
+        ? Math.min(numPages, leftPage + 2)
+        : Math.max(1, leftPage - 2));
+    }
+  }, [single, page, numPages, leftPage, onPageChange]);
+
+  /** تقليب كامل بضغطة زر أو مفتاح */
+  const go = useCallback(async (dir: Dir) => {
     if (busy.current || !doc) return;
     if (dir === 'next' && !canNext) return;
     if (dir === 'prev' && !canPrev) return;
 
-    if (single) {
-      onPageChange(dir === 'next' ? page + 1 : page - 1);
-      return;
-    }
-
-    if (reduce) {
-      onPageChange(dir === 'next' ? Math.min(numPages, leftPage + 2) : Math.max(1, leftPage - 2));
-      return;
-    }
+    if (reduce) { commit(dir); return; }
 
     busy.current = true;
     setFlipping(dir);
     angle.set(0);
-    const to = dir === 'next' ? 180 : -180;
-    await animate(angle, to, { duration: DURATION, ease: EASE });
-    onPageChange(dir === 'next'
-      ? Math.min(numPages, leftPage + 2)
-      : Math.max(1, leftPage - 2));
+    await animate(angle, dir === 'next' ? 180 : -180, { duration: DURATION, ease: EASE });
+    commit(dir);
     setFlipping(null);
     angle.set(0);
     busy.current = false;
-  }, [angle, canNext, canPrev, doc, leftPage, numPages, onPageChange, page, reduce, single]);
+  }, [angle, canNext, canPrev, commit, doc, reduce]);
+
+  /* ── السحب المتتبِّع للإصبع ── */
+  const width = single ? pageWidth : pageWidth * 2;
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (busy.current || reduce || !doc) return;
+    // تجاهل السحب الذي يبدأ من عنصر تفاعلي (زر أو رابط)
+    if ((e.target as HTMLElement).closest('button, a')) return;
+    drag.current = { id: e.pointerId, x: e.clientX, t: performance.now(), dir: null, moved: false };
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.x;
+
+    if (!d.dir) {
+      if (Math.abs(dx) < 10) return;
+      const dir: Dir = dx < 0 ? 'next' : 'prev';
+      if ((dir === 'next' && !canNext) || (dir === 'prev' && !canPrev)) { drag.current = null; return; }
+      d.dir = dir;
+      d.moved = true;
+      setFlipping(dir);
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    }
+
+    const p = Math.min(1, Math.max(0, Math.abs(dx) / (width * 0.8)));
+    angle.set(d.dir === 'next' ? p * 180 : -p * 180);
+  };
+
+  const endDrag = async (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || !d.dir) return;
+
+    const dx = e.clientX - d.x;
+    const dt = Math.max(1, performance.now() - d.t);
+    const velocity = Math.abs(dx) / (dt / 1000);
+    const p = Math.min(1, Math.abs(dx) / (width * 0.8));
+    const dir = d.dir;
+
+    busy.current = true;
+    if (p >= COMMIT || velocity >= FLING) {
+      await animate(angle, dir === 'next' ? 180 : -180, {
+        duration: DURATION * (1 - p) + 0.16, ease: EASE,
+      });
+      commit(dir);
+    } else {
+      await animate(angle, 0, { duration: 0.32, ease: [0.22, 1, 0.36, 1] });
+    }
+    setFlipping(null);
+    angle.set(0);
+    busy.current = false;
+  };
 
   /* لوحة المفاتيح: السهم الأيسر يتقدّم في الاتجاه العربي */
   useEffect(() => {
@@ -103,16 +172,12 @@ export function FlipBook({
   }, [go]);
 
   const sheet = useMemo(() => ({
-    // الورقة المتحرّكة عند التقدّم: وجهها الصفحة اليسرى الحالية، وظهرها التالية
     nextFront: at(leftPage),
     nextBack:  at(leftPage + 1),
-    // الورقة المتحرّكة عند الرجوع: وجهها الصفحة اليمنى الحالية، وظهرها السابقة
     prevFront: at(rightPage),
     prevBack:  at(rightPage - 1),
-    // ما يظهر تحت الورقة المتحرّكة
     underLeftNext:  at(leftPage + 2),
     underRightPrev: at(rightPage - 2),
-    // الثابت أثناء الحركة
     staticRight: at(rightPage),
     staticLeft:  at(leftPage),
   }), [leftPage, rightPage, numPages]);
@@ -136,50 +201,78 @@ export function FlipBook({
     </div>
   );
 
-  /* ── وضع الصفحة الواحدة ── */
+  const dragProps = {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp: endDrag,
+    onPointerCancel: endDrag,
+    style: { touchAction: 'pan-y' as const },
+  };
+
+  /* ══════════ وضع الصفحة الواحدة (الجوال) ══════════ */
   if (single) {
+    const under = flipping === 'next' ? at(page + 1) : flipping === 'prev' ? at(page - 1) : 0;
+
     return (
-      <div className={clsx('relative mx-auto', className)} style={{ width: W, height: H }}>
-        <motion.div key={page}
-          initial={reduce ? false : { opacity: 0, x: 24, rotateY: -8 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="reader-page overflow-hidden"
-          style={{ width: W, height: H, transformStyle: 'preserve-3d' }}>
-          <Sheet n={page} />
+      <div {...dragProps}
+        className={clsx('relative mx-auto select-none', className)}
+        style={{ width: W, height: H, perspective: 1900, touchAction: 'pan-y' }}>
+
+        {/* الصفحة التي ستظهر تحت الورقة المتحرّكة */}
+        {flipping && (
+          <div className="absolute inset-0 reader-page overflow-hidden">
+            <Sheet n={under} />
+          </div>
+        )}
+
+        {/* الصفحة الحالية — تدور مع الإصبع */}
+        <motion.div
+          className="absolute inset-0 reader-page overflow-hidden"
+          style={{
+            transformStyle: 'preserve-3d',
+            transformOrigin: flipping === 'prev' ? 'left center' : 'right center',
+            rotateY: flipping ? angle : 0,
+            zIndex: 10,
+          }}>
+          <div className="absolute inset-0 overflow-hidden" style={{ backfaceVisibility: 'hidden' }}>
+            <Sheet n={page} />
+            <motion.div className="pointer-events-none absolute inset-0 bg-black"
+              style={{ opacity: flipping ? foldShade : 0 }} aria-hidden />
+          </div>
+          {/* ظهر الورقة أثناء الدوران */}
+          <div className="absolute inset-0 overflow-hidden bg-white"
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+            <div className="h-full w-full bg-gradient-to-l from-steel-100 to-white" />
+          </div>
         </motion.div>
+
+        {/* مناطق النقر على الحافّتين */}
+        <button type="button" onClick={() => void go('next')} disabled={!canNext}
+          aria-label="الصفحة التالية"
+          className="absolute inset-y-0 left-0 z-20 w-[20%] disabled:pointer-events-none" />
+        <button type="button" onClick={() => void go('prev')} disabled={!canPrev}
+          aria-label="الصفحة السابقة"
+          className="absolute inset-y-0 right-0 z-20 w-[20%] disabled:pointer-events-none" />
       </div>
     );
   }
 
-  /* ── وضع الكتاب المفتوح (صفحتان) ── */
+  /* ══════════ وضع الكتاب المفتوح (صفحتان) ══════════ */
   return (
-    <div className={clsx('relative mx-auto', className)}
-      style={{ width: W * 2, height: H, perspective: 2600 }}
-      onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
-      onTouchEnd={(e) => {
-        const start = touchX.current;
-        touchX.current = null;
-        if (start == null) return;
-        const dx = (e.changedTouches[0]?.clientX ?? start) - start;
-        if (dx < -55) void go('next');
-        else if (dx > 55) void go('prev');
-      }}>
+    <div {...dragProps}
+      className={clsx('relative mx-auto select-none', className)}
+      style={{ width: W * 2, height: H, perspective: 2600, touchAction: 'pan-y' }}>
 
       {/* الصفحة اليمنى (تُقرأ أولاً في العربية) */}
       <div className="absolute inset-y-0 right-0 reader-page overflow-hidden"
         style={{ width: W, borderStartStartRadius: 0, borderEndStartRadius: 0 }}>
-        {flipping === 'prev'
-          ? <Sheet n={sheet.underRightPrev} />
-          : <Sheet n={sheet.staticRight} />}
+        {flipping === 'prev' ? <Sheet n={sheet.underRightPrev} /> : <Sheet n={sheet.staticRight} />}
       </div>
 
       {/* الصفحة اليسرى */}
       <div className="absolute inset-y-0 left-0 reader-page overflow-hidden"
         style={{ width: W, borderStartEndRadius: 0, borderEndEndRadius: 0 }}>
-        {flipping === 'next'
-          ? <Sheet n={sheet.underLeftNext} />
-          : <Sheet n={sheet.staticLeft} />}
+        {flipping === 'next' ? <Sheet n={sheet.underLeftNext} /> : <Sheet n={sheet.staticLeft} />}
       </div>
 
       {/* ظلّ الكعب في المنتصف */}
@@ -197,16 +290,12 @@ export function FlipBook({
             transformStyle: 'preserve-3d',
             transformOrigin: flipping === 'next' ? 'right center' : 'left center',
             rotateY: angle,
-          }}
-        >
-          {/* الوجه */}
-          <div className="absolute inset-0 overflow-hidden reader-page"
-            style={{ backfaceVisibility: 'hidden' }}>
+          }}>
+          <div className="absolute inset-0 overflow-hidden reader-page" style={{ backfaceVisibility: 'hidden' }}>
             <Sheet n={flipping === 'next' ? sheet.nextFront : sheet.prevFront} />
             <motion.div className="pointer-events-none absolute inset-0 bg-black"
               style={{ opacity: foldShade }} aria-hidden />
           </div>
-          {/* الظهر */}
           <div className="absolute inset-0 overflow-hidden reader-page"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
             <Sheet n={flipping === 'next' ? sheet.nextBack : sheet.prevBack} />
@@ -219,12 +308,10 @@ export function FlipBook({
       {/* مناطق النقر للتقليب */}
       <button type="button" onClick={() => void go('next')} disabled={!canNext}
         aria-label="الصفحة التالية"
-        className="absolute inset-y-0 left-0 z-30 w-[22%] cursor-w-resize disabled:cursor-default"
-        style={{ background: 'transparent' }} />
+        className="absolute inset-y-0 left-0 z-30 w-[18%] cursor-w-resize disabled:pointer-events-none" />
       <button type="button" onClick={() => void go('prev')} disabled={!canPrev}
         aria-label="الصفحة السابقة"
-        className="absolute inset-y-0 right-0 z-30 w-[22%] cursor-e-resize disabled:cursor-default"
-        style={{ background: 'transparent' }} />
+        className="absolute inset-y-0 right-0 z-30 w-[18%] cursor-e-resize disabled:pointer-events-none" />
     </div>
   );
 }

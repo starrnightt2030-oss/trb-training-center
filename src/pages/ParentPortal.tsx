@@ -68,7 +68,11 @@ export default function ParentPortal() {
     const s = data.student;
     const a = data.attendance;
     const attPct = a?.attendance_pct ?? null;
-    const low = attPct !== null && attPct < 85;
+    // لم يبدأ تسجيل الحضور في إدارة شئون الطلاب بعد: أصفار في كل الحقول.
+    // عرضها كأرقام يوهم بأن الطالب غائب تمامًا أو حاضر تمامًا — والصواب
+    // أن نقول صراحةً إن التسجيل لم يبدأ.
+    const noData = !a || ((a.total_school_days ?? 0) === 0 && attPct === null);
+    const low = !noData && attPct !== null && attPct < 85;
 
     return (
       <>
@@ -107,6 +111,19 @@ export default function ParentPortal() {
           {/* أرقام الحضور */}
           <section>
             <h2 className="mb-4 text-[18px]">الحضور والغياب</h2>
+
+            {noData ? (
+              <div className="card flex flex-col items-center gap-3 p-8 text-center sm:p-10">
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-3">
+                  <CalendarX2 className="h-7 w-7 text-muted" aria-hidden />
+                </span>
+                <h3 className="text-[17px]">لم يبدأ تسجيل الحضور بعد</h3>
+                <p className="max-w-md text-[14px] leading-7 text-muted">
+                  لم تُسجَّل أي أيام حضور أو غياب لهذا العام الدراسي حتى الآن في إدارة شئون الطلاب.
+                  ستظهر النسب وسجل التواريخ هنا تلقائياً فور بدء التسجيل اليومي.
+                </p>
+              </div>
+            ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="نسبة الحضور" value={formatPercent(attPct)} icon={TrendingUp}
                 tone={low ? 'border-brass-200 bg-brass-50 text-brass-900' : 'border-emerald-200 bg-emerald-50 text-emerald-900'} />
@@ -117,6 +134,7 @@ export default function ParentPortal() {
               <StatCard label="أيام الغياب" value={formatNumber(a?.absence_days ?? 0)} icon={CalendarX2}
                 tone="border-steel-200 bg-surface text-ink" />
             </div>
+            )}
 
             {low && (
               <div className="mt-4">
@@ -133,7 +151,7 @@ export default function ParentPortal() {
           </section>
 
           {/* سجل الغياب */}
-          <section>
+          <section hidden={noData}>
             <h2 className="mb-4 text-[18px]">سجل الغياب بالتواريخ</h2>
             {data.absences?.length ? (
               <Table>

@@ -55,6 +55,7 @@
     --shadow-float: 0 4px 10px rgb(10 28 56 / .07), 0 34px 70px -28px rgb(10 28 56 / .36);
 
     --header-h: 68px;
+    --tabbar-h: 62px;
   }
 
   [data-theme='dark'] {
@@ -143,6 +144,38 @@
 
   img, svg, video { max-width: 100%; }
 
+  /* ═══ ضبط الجوال ═══════════════════════════════════════════════════
+     ① منع iOS من تكبير الصفحة تلقائيًا عند التركيز على حقل: يحدث لأي
+        حقل حجم خطّه أقل من 16px، فنرفع الحد الأدنى على الشاشات اللمسية.
+     ② مقاس خط أساسي أصغر قليلًا وارتفاع سطر أوسع — أنسب للعربية على
+        الشاشة الصغيرة.
+     ③ مساحة أسفل الصفحة بقدر شريط التنقّل السفلي حتى لا يغطّي المحتوى.
+     ═══════════════════════════════════════════════════════════════════ */
+  @media (max-width: 1023px) {
+    body { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    input, select, textarea { font-size: 16px; }
+  }
+
+  @media (max-width: 640px) {
+    html { font-size: 15.5px; }
+    body { line-height: 1.75; }
+    h1 { letter-spacing: -0.01em; }
+  }
+
+  /* منع السحب المطّاطي الأفقي الذي يكسر إحساس التطبيق */
+  html, body { overscroll-behavior-x: none; max-width: 100%; overflow-x: clip; }
+
+  /* في الوضع المثبَّت (تطبيق) نمنع تحديد النص العشوائي كما في التطبيقات */
+  @media (display-mode: standalone) {
+    body { -webkit-user-select: none; user-select: none; }
+    p, h1, h2, h3, h4, li, dd, dt, span, td, th, .textLayer, input, textarea {
+      -webkit-user-select: text; user-select: text;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: .01ms !important;
@@ -156,6 +189,22 @@
 @layer components {
   /* ── تخطيط ── */
   .container-page { @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8; }
+
+  /* أقسام أقصر على الجوال — المسافات الكبيرة تُشعر بالفراغ على شاشة صغيرة */
+  .section { @apply py-12 sm:py-20 lg:py-24; }
+
+  /* هدف لمس مريح: ٤٤ بكسل هو الحدّ الموصى به */
+  .tap { @apply min-h-11 min-w-11; }
+
+  /* شريط أفقي قابل للسحب مع حواف مريحة — يستعمله رفّ الكتب والفلاتر */
+  .rail {
+    @apply -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rail > * { scroll-snap-align: start; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail { -ms-overflow-style: none; scrollbar-width: none; }
   .container-tight { @apply mx-auto w-full max-w-4xl px-4 sm:px-6; }
   .section { @apply py-16 sm:py-20 lg:py-24; }
 
@@ -276,10 +325,20 @@
     border-start-start-radius: inherit; border-end-start-radius: inherit;
   }
 
+  /* ── ورقة سفلية على نمط التطبيقات ── */
+  .sheet {
+    @apply fixed inset-x-0 bottom-0 z-[70] max-h-[85vh] overflow-y-auto rounded-t-3xl
+           border-t border-line bg-surface shadow-float;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .sheet-grip {
+    @apply mx-auto mb-2 mt-3 h-1.5 w-11 rounded-full bg-line-2;
+  }
+
   /* ── عارض الكتاب ── */
   .reader-shell { background: rgb(var(--navy-950)); }
   .reader-page   { @apply rounded-[6px] bg-white shadow-[0_12px_40px_-12px_rgb(0_0_0/.75)]; }
-  .reader-toolbar{ @apply flex flex-wrap items-center gap-1.5 border-line bg-surface-2/95 backdrop-blur; }
+  .reader-toolbar{ @apply flex flex-nowrap items-center gap-1 border-line bg-surface-2/95 backdrop-blur sm:flex-wrap sm:gap-1.5; }
 
   /* طبقة النص فوق صفحة PDF — تتيح التحديد والبحث بلا تشويه للعربية */
   .textLayer {

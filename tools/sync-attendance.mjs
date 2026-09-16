@@ -637,7 +637,26 @@ async function main() {
   const weeklyOff = db.all('SELECT study_year, spec_id, weekday FROM weekly_off_days WHERE year_id=?', Number(year.id));
   detail(`أيام تقويم مستبعَدة: ${holidaySet.size} / ${holidayRows.length} — قواعد راحة أسبوعية: ${weeklyOff.length}`);
 
-  const countSchoolDays = makeSchoolDaysCounter(rangeFrom, rangeTo, holidaySet, weeklyOff, cfg);
+  /* ── نطاق التسجيل الفعلي ──────────────────────────────────────────────
+     «السستم» يسجّل الغياب فقط، واليوم الذي لا سجل له يُعتبر حضورًا. وهذا
+     صحيح فقط ضمن الأيام التي بدأ فيها التسجيل فعلًا؛ أمّا الأيام السابقة
+     له فلا تُعرف حالتها، واحتسابها حضورًا يُنتج رقمًا وهميًا (١٠ أيام حضور
+     لكل طالب بينما لم يُسجَّل شيء بعد).
+     لذلك نحصر الحساب بين أول يوم وآخر يوم سُجّل فيهما شيء فعلًا. */
+  const recordedDates = sysAttendance.map((a) => String(a.day_date).slice(0, 10)).filter(Boolean).sort();
+  const hasRecords = recordedDates.length > 0;
+  const countFrom = hasRecords ? recordedDates[0] : null;
+  const countTo   = hasRecords ? recordedDates[recordedDates.length - 1] : null;
+
+  if (hasRecords) {
+    say(`    نطاق التسجيل الفعلي: من ${countFrom} إلى ${countTo}`);
+  } else {
+    say('    لم يبدأ تسجيل الحضور بعد — أيام الدراسة المحتسبة: صفر');
+  }
+
+  const countSchoolDays = hasRecords
+    ? makeSchoolDaysCounter(countFrom, countTo, holidaySet, weeklyOff, cfg)
+    : () => 0;
 
   /* ── ٤) الوضع التجريبي بلا اتصال: تقرير قراءة فقط ── */
   if (!remote) {
@@ -899,7 +918,8 @@ async function main() {
     const rec = perStudent.get(Number(s.id)) || { absence: 0, excused: 0 };
     const absence = rec.absence;
     const attend = Math.max(0, total - absence - rec.excused);
-    const pct = (n) => (total > 0 ? Math.round((n / total) * 10000) / 100 : 0);
+    // بلا أيام محتسَبة لا معنى لنسبة مئوية — null أصدق من صفر يوحي بغياب كامل
+    const pct = (n) => (total > 0 ? Math.round((n / total) * 10000) / 100 : null);
     summaries.push({
       student_id: uuid,
       academic_year: academicYear,
@@ -912,6 +932,9 @@ async function main() {
     });
   }
   say(`    ملخّصات محسوبة: ${summaries.length}`);
+  if (!hasRecords) {
+    say('    (كلها بأصفار — لن تظهر نسب في بوابة ولي الأمر حتى يبدأ التسجيل في السستم)');
+  }
 
   let summariesUpserted = 0;
   if (!DRY_RUN && summaries.length) {
