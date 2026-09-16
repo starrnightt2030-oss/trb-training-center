@@ -14,7 +14,7 @@
       تكون حيّة دائمًا (الغياب والأخبار والكتب تتغيّر).
    ═══════════════════════════════════════════════════════════════════════ */
 
-const VERSION    = 'v3';
+const VERSION    = '__BUILD_STAMP__';
 const SHELL      = `trb-shell-${VERSION}`;
 const ASSETS     = `trb-assets-${VERSION}`;
 const MEDIA      = `trb-media-${VERSION}`;
@@ -36,6 +36,9 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    // كل نشرة تحمل بصمة جديدة، وأسماء ملفات البناء تتغيّر معها. الإبقاء على
+    // مخزن قديم يعني أن صفحة محفوظة قد تطلب حزمة لم تعد موجودة على الخادم،
+    // فينكسر التطبيق برسالة «Failed to fetch dynamically imported module».
     const names = await caches.keys();
     await Promise.all(names.filter((n) => n.startsWith('trb-') && !KEEP.has(n)).map((n) => caches.delete(n)));
     if (self.registration.navigationPreload) {
@@ -58,7 +61,9 @@ const isMedia = (url) =>
 async function networkFirst(request, preload) {
   const cache = await caches.open(SHELL);
   try {
-    const fresh = (await preload) || await fetch(request);
+    // no-store يمنع طبقة التخزين في المتصفح من إعادة صفحة قديمة تشير إلى
+    // حزم حُذفت في النشرة الأخيرة
+    const fresh = (await preload) || await fetch(request, { cache: 'no-store' });
     cache.put(request, fresh.clone()).catch(() => {});
     return fresh;
   } catch {

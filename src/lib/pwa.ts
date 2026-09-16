@@ -12,6 +12,57 @@ let onUpdate: UpdateHandler | null = null;
 
 export function setUpdateHandler(fn: UpdateHandler) { onUpdate = fn; }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   التعافي من حزمة مفقودة بعد النشر
+   ═══════════════════════════════════════════════════════════════════════
+   التطبيق يُحمِّل كل صفحة عند زيارتها (تقسيم الحزم)، وأسماء ملفات البناء
+   تحمل بصمة تتغيّر مع كل نشرة. فإن كانت لدى المستخدم صفحة مفتوحة أو محفوظة
+   من نشرة سابقة ثم نُشرت نسخة جديدة، طلب المتصفح حزمة لم تعد موجودة وظهر:
+       TypeError: Failed to fetch dynamically imported module
+   الحل الصحيح ليس رسالة خطأ للمستخدم، بل إعادة تحميل الصفحة مرة واحدة —
+   فتُجلب النسخة الجديدة ويكمل عمله. والحارس في sessionStorage يمنع حلقة
+   إعادة تحميل لا تنتهي لو كان السبب شيئًا آخر (انقطاع شبكة مثلًا).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const RELOAD_GUARD = 'trb.chunk.reloaded';
+
+function reloadOnceForStaleChunk() {
+  try {
+    if (sessionStorage.getItem(RELOAD_GUARD)) return;   // جُرّبت مرة — لا نكرّر
+    sessionStorage.setItem(RELOAD_GUARD, '1');
+  } catch { /* التخزين محجوب — نُعيد التحميل على أي حال مرة واحدة */ }
+  window.location.reload();
+}
+
+const STALE_CHUNK = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i;
+
+export function installChunkRecovery() {
+  if (typeof window === 'undefined') return;
+
+  // الحدث الرسمي من Vite عند فشل التحميل المسبق لحزمة
+  window.addEventListener('vite:preloadError', (e) => {
+    e.preventDefault();
+    reloadOnceForStaleChunk();
+  });
+
+  window.addEventListener('unhandledrejection', (e) => {
+    const msg = String((e.reason as { message?: string })?.message ?? e.reason ?? '');
+    if (STALE_CHUNK.test(msg)) {
+      e.preventDefault();
+      reloadOnceForStaleChunk();
+    }
+  });
+
+  window.addEventListener('error', (e) => {
+    if (STALE_CHUNK.test(String(e.message ?? ''))) reloadOnceForStaleChunk();
+  });
+
+  // نجح التحميل: امسح الحارس حتى تعمل الآلية في المرة القادمة
+  window.addEventListener('load', () => {
+    try { sessionStorage.removeItem(RELOAD_GUARD); } catch { /* تجاهُل */ }
+  });
+}
+
 export function registerServiceWorker() {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
   // أثناء التطوير لا نسجّل شيئًا حتى لا يخزّن نسخًا من ملفات قيد التعديل

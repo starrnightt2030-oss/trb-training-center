@@ -1,8 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { registerServiceWorker } from './lib/pwa';
+import { installChunkRecovery, registerServiceWorker } from './lib/pwa';
 import './index.css';
+
+// يجب أن تُركَّب قبل أي تحميل كسول حتى تلتقط أول فشل
+installChunkRecovery();
 
 const el = document.getElementById('root');
 if (!el) throw new Error('عنصر الجذر #root غير موجود في index.html');
