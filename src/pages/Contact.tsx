@@ -1,7 +1,7 @@
 import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from './PageHeader';
-import { useSetting } from '@/hooks/useSettings';
+import { useSetting, useSettingBool } from '@/hooks/useSettings';
 import { useSeo } from '@/hooks/useSeo';
 import { buildWhatsAppLink } from '@/lib/whatsapp';
 
@@ -24,7 +24,8 @@ export default function Contact() {
   const phone2   = useSetting('contact.phone2', '');
   const email    = useSetting('contact.email', '');
   const hours    = useSetting('contact.working_hours', '');
-  const whatsapp = useSetting('contact.whatsapp', '') || useSetting('whatsapp.number', '');
+  const waEnabled = useSettingBool('whatsapp.enabled', true);
+  const whatsapp = waEnabled ? (useSetting('whatsapp.number', '') || useSetting('contact.whatsapp', '')) : '';
   const mapUrl   = useSetting('contact.map_url', '');
   const center   = useSetting('center.name', '');
 
@@ -32,11 +33,12 @@ export default function Contact() {
   const wa = whatsapp ? buildWhatsAppLink(whatsapp, `السلام عليكم، أرغب في الاستفسار عن ${center}.`) : null;
 
   const cards = [
-    clean(address) && { icon: MapPin, label: 'العنوان', value: address, href: mapUrl || undefined },
-    clean(phone)   && { icon: Phone,  label: 'الهاتف',  value: phone,   href: `tel:${phone}` },
-    clean(phone2)  && { icon: Phone,  label: 'هاتف إضافي', value: phone2, href: `tel:${phone2}` },
-    clean(email)   && { icon: Mail,   label: 'البريد الإلكتروني', value: email, href: `mailto:${email}` },
-    clean(hours)   && { icon: Clock,  label: 'مواعيد العمل', value: hours },
+    clean(address)  && { icon: MapPin, label: 'العنوان', value: address, href: mapUrl || undefined },
+    clean(phone)    && { icon: Phone,  label: 'الهاتف',  value: phone,   href: `tel:${phone}` },
+    clean(phone2)   && { icon: Phone,  label: 'هاتف إضافي', value: phone2, href: `tel:${phone2}` },
+    clean(whatsapp) && wa && { icon: MessageCircle, label: 'واتساب', value: whatsapp, href: wa },
+    clean(email)    && { icon: Mail,   label: 'البريد الإلكتروني', value: email, href: `mailto:${email}` },
+    clean(hours)    && { icon: Clock,  label: 'مواعيد العمل', value: hours },
   ].filter(Boolean) as Array<{ icon: typeof Phone; label: string; value: string; href?: string }>;
 
   return (

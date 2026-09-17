@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { updateSettings } from '@/data/api';
 import { useSettings, useSettingsQuery } from '@/hooks/useSettings';
 import { useSeo } from '@/hooks/useSeo';
+import { normalizeWhatsAppNumber } from '@/lib/whatsapp';
 
 const GROUP_LABELS: Record<string, string> = {
   identity:      'هوية المركز والشعار',
@@ -66,6 +67,9 @@ export default function SettingsAdmin() {
           else if (r.input_type === 'list') val = [];
           else val = '';
         }
+        if ((r.key === 'whatsapp.number' || r.key === 'contact.whatsapp') && typeof val === 'string' && val.trim()) {
+          val = normalizeWhatsAppNumber(val);
+        }
         return { key: r.key, value: val };
       });
       await updateSettings(payload);
@@ -82,7 +86,17 @@ export default function SettingsAdmin() {
   if (isLoading) return <LoadingBlock />;
   if (error) return <ErrorState error={error} onRetry={() => void query.refetch()} />;
 
-  const set = (k: string, v: unknown) => setDraft((d) => ({ ...d, [k]: v }));
+  const set = (k: string, v: unknown) => {
+    setDraft((d) => {
+      const next = { ...d, [k]: v };
+      if (k === 'whatsapp.number' && typeof v === 'string') {
+        next['contact.whatsapp'] = v;
+      } else if (k === 'contact.whatsapp' && typeof v === 'string') {
+        next['whatsapp.number'] = v;
+      }
+      return next;
+    });
+  };
   const str = (k: string) => (typeof draft[k] === 'string' ? (draft[k] as string) : draft[k] == null ? '' : String(draft[k]));
 
   return (
@@ -139,6 +153,11 @@ export default function SettingsAdmin() {
               case 'phone':
                 return <Input key={r.key} label={r.label} dir="ltr"
                   type={r.input_type === 'email' ? 'email' : r.input_type === 'phone' ? 'tel' : 'url'}
+                  hint={
+                    r.key.includes('whatsapp')
+                      ? 'مثال: 201552225105 (تُضبط تلقائياً بالصيغة الدولية مع كود مصر حتى لو كُتب 0155... أو +20...)'
+                      : undefined
+                  }
                   value={str(r.key)} onChange={(e) => set(r.key, e.target.value)} />;
               default:
                 return <Input key={r.key} label={r.label} value={str(r.key)}

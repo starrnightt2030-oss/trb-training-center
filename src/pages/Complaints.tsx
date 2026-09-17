@@ -34,7 +34,7 @@ export default function Complaints() {
   const slaDays  = useSettingNumber('complaints.sla_days', 5);
   const allowAtt = useSettingBool('complaints.allow_attachments', true);
   const waOn     = useSettingBool('whatsapp.enabled', true);
-  const waNumber = useSetting('whatsapp.number', '');
+  const waNumber = useSetting('whatsapp.number', '') || useSetting('contact.whatsapp', '');
   const waTpl    = useSetting('whatsapp.template', '');
   const center   = useSetting('center.name', 'مركز تدريب شركة ترسانة الإسكندرية');
 

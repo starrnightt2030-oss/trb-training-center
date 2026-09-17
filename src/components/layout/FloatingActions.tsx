@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, MessageCircle, Plus, MessageSquareWarning, Users, X } from 'lucide-react';
-import { useSetting } from '@/hooks/useSettings';
+import { useSetting, useSettingBool } from '@/hooks/useSettings';
 import { buildWhatsAppLink } from '@/lib/whatsapp';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -12,8 +12,9 @@ export function FloatingActions() {
   const { pathname } = useLocation();
   const [showTop, setShowTop] = useState(false);
   const [open, setOpen] = useState(false);
-  const wa = useSetting('contact.whatsapp', '');
-  const waUrl = wa && !wa.startsWith('[')
+  const waEnabled = useSettingBool('whatsapp.enabled', true);
+  const wa = useSetting('whatsapp.number', '') || useSetting('contact.whatsapp', '');
+  const waUrl = waEnabled && wa && !wa.startsWith('[')
     ? buildWhatsAppLink(wa, 'السلام عليكم، أود الاستفسار عن مركز التدريب.')
     : null;
 
