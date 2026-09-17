@@ -438,3 +438,31 @@ export async function updateAdminUser(userId: string, patch: Partial<AdminUser>)
   const res = await supabase.from('admin_users').update(patch).eq('user_id', userId).select().single();
   return unwrap(res, 'تحديث المستخدم') as AdminUser;
 }
+
+export async function createAdminUser(params: {
+  email: string;
+  password: string;
+  full_name: string;
+  role: AdminRole;
+}): Promise<AdminUser> {
+  const res = await supabase.rpc('admin_create_user', {
+    p_email: params.email,
+    p_password: params.password,
+    p_full_name: params.full_name,
+    p_role: params.role,
+  });
+  return unwrap(res, 'إنشاء المستخدم') as AdminUser;
+}
+
+export async function deleteAdminUser(userId: string): Promise<boolean> {
+  const res = await supabase.rpc('admin_delete_user', { p_user_id: userId });
+  return unwrap(res, 'حذف المستخدم') as boolean;
+}
+
+export async function resetAdminUserPassword(userId: string, newPassword: string): Promise<boolean> {
+  const res = await supabase.rpc('admin_reset_user_password', {
+    p_user_id: userId,
+    p_new_password: newPassword,
+  });
+  return unwrap(res, 'إعادة تعيين كلمة المرور') as boolean;
+}
