@@ -34,7 +34,8 @@ export async function fetchSettings(): Promise<{ map: SettingsMap; rows: SiteSet
 }
 
 export async function updateSetting(key: string, value: unknown) {
-  const res = await supabase.from('site_settings').update({ value }).eq('key', key).select().single();
+  const safeValue = value === null || value === undefined ? '' : value;
+  const res = await supabase.from('site_settings').update({ value: safeValue }).eq('key', key).select().single();
   return unwrap(res, 'حفظ الإعداد');
 }
 

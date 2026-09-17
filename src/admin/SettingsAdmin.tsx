@@ -58,7 +58,17 @@ export default function SettingsAdmin() {
   const save = async () => {
     setSaving(true);
     try {
-      await updateSettings(dirty.map((r) => ({ key: r.key, value: draft[r.key] })));
+      const payload = dirty.map((r) => {
+        let val = draft[r.key];
+        if (val === null || val === undefined) {
+          if (r.input_type === 'number') val = 0;
+          else if (r.input_type === 'boolean') val = false;
+          else if (r.input_type === 'list') val = [];
+          else val = '';
+        }
+        return { key: r.key, value: val };
+      });
+      await updateSettings(payload);
       await qc.invalidateQueries({ queryKey: ['settings'] });
       await query.refetch();
       toast.push({ tone: 'success', title: 'تم حفظ الإعدادات', description: 'ستظهر التعديلات مباشرةً على الموقع.' });
@@ -110,7 +120,7 @@ export default function SettingsAdmin() {
             switch (r.input_type) {
               case 'image':
                 return <ImageUpload key={r.key} label={r.label} value={str(r.key) || null}
-                  prefix="settings" onChange={(v) => set(r.key, v)} />;
+                  prefix="settings" onChange={(v) => set(r.key, v ?? '')} />;
               case 'textarea':
                 return <Textarea key={r.key} label={r.label} value={str(r.key)}
                   onChange={(e) => set(r.key, e.target.value)} rows={4} />;
@@ -123,7 +133,7 @@ export default function SettingsAdmin() {
                   onChange={(v) => set(r.key, v)} />;
               case 'number':
                 return <Input key={r.key} label={r.label} type="number" value={str(r.key)}
-                  onChange={(e) => set(r.key, e.target.value === '' ? null : Number(e.target.value))} />;
+                  onChange={(e) => set(r.key, e.target.value === '' ? 0 : Number(e.target.value))} />;
               case 'url':
               case 'email':
               case 'phone':
