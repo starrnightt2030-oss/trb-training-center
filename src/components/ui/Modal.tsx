@@ -9,16 +9,26 @@ export function Modal({ open, onClose, title, description, children, footer, siz
   children: ReactNode; footer?: ReactNode; size?: 'sm' | 'md' | 'lg' | 'xl';
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    ref.current?.focus();
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, [open, onClose]);
+
+    // لا تسحب التركيز من حقول الإدخال إذا كان المستخدم يكتب بداخلها بالفعل
+    if (ref.current && !ref.current.contains(document.activeElement)) {
+      ref.current.focus();
+    }
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -26,7 +36,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center overflow-y-auto bg-navy-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
-         onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+         onMouseDown={(e) => { if (e.target === e.currentTarget) onCloseRef.current(); }}>
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
            className={clsx('w-full rounded-t-3xl bg-surface shadow-lift outline-none sm:rounded-2xl animate-fade-up', widths[size])}>
         <div className="flex items-start justify-between gap-4 border-b border-steel-200 px-5 py-4">
@@ -34,7 +44,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <h2 className="text-lg font-bold text-ink">{title}</h2>
             {description && <p className="mt-0.5 text-[13px] text-steel-500">{description}</p>}
           </div>
-          <button onClick={onClose} aria-label="إغلاق"
+          <button onClick={() => onCloseRef.current()} aria-label="إغلاق"
                   className="rounded-lg p-2 text-steel-500 transition hover:bg-steel-100 hover:text-ink">
             <X className="h-5 w-5" aria-hidden />
           </button>

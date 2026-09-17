@@ -1,4 +1,4 @@
-import { forwardRef, useId } from 'react';
+import { forwardRef, useId, useState } from 'react';
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'react';
 import clsx from 'clsx';
 
@@ -83,12 +83,21 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
 export function ListField({ label, hint, value, onChange }: {
   label: string; hint?: string; value: string[]; onChange: (v: string[]) => void;
 }) {
+  const [text, setText] = useState<string | null>(null);
+  const currentText = text !== null ? text : (value ?? []).join('\n');
+
   return (
     <Textarea
       label={label}
       hint={hint ?? 'اكتب عنصراً في كل سطر'}
-      value={(value ?? []).join('\n')}
-      onChange={(e) => onChange(e.target.value.split('\n').map((s) => s.trim()).filter(Boolean))}
+      value={currentText}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value.split('\n').map((s) => s.trim()).filter(Boolean));
+      }}
+      onBlur={() => {
+        setText(null);
+      }}
     />
   );
 }
