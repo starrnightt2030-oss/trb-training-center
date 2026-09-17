@@ -102,16 +102,17 @@ export function ListField({ label, hint, value, onChange }: {
   );
 }
 
-export function Switch({ label, hint, checked, onChange }: {
-  label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void;
+export function Switch({ label, hint, checked, disabled, onChange }: {
+  label: string; hint?: string; checked: boolean; disabled?: boolean; onChange: (v: boolean) => void;
 }) {
   const id = useId();
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-steel-200 bg-surface p-3.5">
+    <div className={clsx('flex items-start gap-3 rounded-xl border border-steel-200 bg-surface p-3.5', disabled && 'opacity-60')}>
       <button
         type="button" role="switch" aria-checked={checked} aria-labelledby={id}
-        onClick={() => onChange(!checked)}
-        className={clsx('mt-0.5 h-6 w-11 shrink-0 rounded-full transition', checked ? 'bg-navy-700' : 'bg-steel-300')}
+        disabled={disabled}
+        onClick={() => !disabled && onChange(!checked)}
+        className={clsx('mt-0.5 h-6 w-11 shrink-0 rounded-full transition', checked ? 'bg-navy-700' : 'bg-steel-300', disabled && 'cursor-not-allowed')}
       >
         <span className={clsx('block h-5 w-5 rounded-full bg-surface shadow transition-transform mx-0.5',
           checked ? '-translate-x-[20px]' : 'translate-x-0')} />

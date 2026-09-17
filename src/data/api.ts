@@ -10,7 +10,7 @@ import { extractYouTubeId } from '@/lib/youtube';
 import type {
   Book, Complaint, ComplaintUpdate, ContentKind, GalleryItem, Grade, ImportResult,
   ParentPortalResult, Post, SiteSetting, Specialization, Student, StudyPlan, Subject, Video,
-  AdminUser, AttendanceSummary, SubjectKind,
+  AdminRole, AdminUser, AttendanceSummary, SubjectKind,
 } from '@/types/db';
 
 class DataError extends Error {

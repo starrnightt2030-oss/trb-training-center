@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, Plus, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react';
+import { KeyRound, Trash2, UserPlus, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { AdminPage } from './AdminPage';
 import { Alert, EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States';
