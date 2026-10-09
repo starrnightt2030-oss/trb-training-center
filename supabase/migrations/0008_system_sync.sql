@@ -56,15 +56,10 @@ declare
   v_to       date := (p->>'range_to')::date;
   v_batch    uuid;
   v_map      jsonb := '{}'::jsonb;     -- مفتاح الطالب في السيستم ← uuid في المنصة
-  r          jsonb;
-  v_id       uuid;
-  v_code_own uuid;
-  v_nid_own  uuid;
-  v_nid      text;
-  v_spec     uuid;
   v_ins      int := 0;
   v_upd      int := 0;
   v_skip     int := 0;
+  v_stale    int := 0;
   v_att      int := 0;
   v_att_del  int := 0;
   v_sum      int := 0;
@@ -79,60 +74,98 @@ begin
   values ('SchoolSystem', 'system_sync', jsonb_array_length(coalesce(p->'students','[]')))
   returning id into v_batch;
 
-  -- الطلاب: المطابقة بالرقم القومي أولاً ثم بكود الطالب
-  for r in select * from jsonb_array_elements(coalesce(p->'students','[]')) loop
-    v_nid := nullif(regexp_replace(coalesce(r->>'national_id',''), '\D', '', 'g'), '');
-    if nullif(trim(r->>'student_code'), '') is null then
-      v_skip := v_skip + 1; continue;
-    end if;
-    v_spec := (select id from public.specializations where slug = r->>'spec_slug');
+  /* ── الطلاب ──────────────────────────────────────────────────────────────
+     السيستم هو المصدر: كل طالب فيه يأخذ على المنصة كوده كما هو تمامًا، حتى
+     يدخل ولي أمره بنفس الكود المكتوب في السيستم.
+       ① المطابقة بالرقم القومي أولاً (هوية الطالب الثابتة)
+       ② ثم بالكود — بشرط ألا يكون الصف محجوزًا لطالب آخر أو يحمل رقمًا قوميًا مختلفًا
+       ③ صفوف قديمة على المنصة تحمل كودًا صار لطالب آخر في السيستم
+          (من استيراد سابق) يُنقل كودها جانبًا فلا تحجب صاحبه الحقيقي
+     وتُنفَّذ كلها جملةً واحدة، فلا يتعارض طالبان على صف واحد. */
+  drop table if exists t_stu;
+  create temp table t_stu on commit drop as
+  select x.v->>'key' as key,
+         trim(x.v->>'student_code') as code,
+         nullif(regexp_replace(coalesce(x.v->>'national_id',''), '\D', '', 'g'), '') as nid,
+         x.v as j,
+         null::uuid as pid,
+         x.ord as ord
+    from jsonb_array_elements(coalesce(p->'students','[]')) with ordinality as x(v, ord)
+   where nullif(trim(x.v->>'student_code'), '') is not null;
+  v_skip := jsonb_array_length(coalesce(p->'students','[]')) - (select count(*) from t_stu);
 
-    v_id := null;
-    if v_nid is not null then
-      select id into v_id from public.students
-       where regexp_replace(coalesce(national_id,''), '\D', '', 'g') = v_nid limit 1;
-    end if;
-    if v_id is null then
-      select id into v_id from public.students where student_code = trim(r->>'student_code') limit 1;
-    end if;
+  -- كود أو رقم قومي مكرّر داخل الحزمة نفسها (لا يُفترض أن يقع) — يُرفع الأول وينبَّه على الباقي
+  with d as (
+    delete from t_stu a using t_stu b
+     where a.ord > b.ord and (a.code = b.code or (a.nid is not null and a.nid = b.nid))
+    returning a.j->>'full_name' as n
+  )
+  select v_warn || coalesce(jsonb_agg(jsonb_build_object('type','warning','message',
+           'لم يُرفع «' || n || '»: كوده أو رقمه القومي مكرّر لطالب آخر في السيستم')), '[]'::jsonb),
+         v_skip + count(*)
+    into v_warn, v_skip from d;
 
-    if v_id is null then
-      insert into public.students(student_code, national_id, full_name, grade_id, specialization_id,
-                                  class_label, guardian_name, guardian_phone, academic_year, status)
-      values (trim(r->>'student_code'), v_nid, coalesce(nullif(trim(r->>'full_name'),''), '—'),
-              nullif(r->>'grade_id','')::smallint, v_spec, nullif(r->>'class_label',''),
-              nullif(r->>'guardian_name',''), nullif(r->>'guardian_phone',''), v_year,
-              coalesce(nullif(r->>'status',''), 'active'))
-      returning id into v_id;
-      v_ins := v_ins + 1;
-    else
-      -- لا نغيّر كود طالب يملكه طالب آخر
-      select id into v_code_own from public.students where student_code = trim(r->>'student_code') limit 1;
-      v_nid_own := null;
-      if v_nid is not null then
-        select id into v_nid_own from public.students
-         where regexp_replace(coalesce(national_id,''), '\D', '', 'g') = v_nid and id <> v_id limit 1;
-      end if;
-      if v_code_own is not null and v_code_own <> v_id then
-        v_warn := v_warn || jsonb_build_object('type','warning','message',
-          'كود الطالب ' || (r->>'student_code') || ' مستخدم لطالب آخر — حُدِّث «' || (r->>'full_name') || '» دون تغيير كوده');
-      end if;
-      update public.students set
-        student_code      = case when v_code_own is null or v_code_own = v_id then trim(r->>'student_code') else student_code end,
-        national_id       = case when v_nid_own is null then coalesce(v_nid, national_id) else national_id end,
-        full_name         = coalesce(nullif(trim(r->>'full_name'),''), full_name),
-        grade_id          = nullif(r->>'grade_id','')::smallint,
-        specialization_id = v_spec,
-        class_label       = nullif(r->>'class_label',''),
-        guardian_name     = nullif(r->>'guardian_name',''),
-        guardian_phone    = nullif(r->>'guardian_phone',''),
-        academic_year     = v_year,
-        status            = coalesce(nullif(r->>'status',''), 'active')
-      where id = v_id;
-      v_upd := v_upd + 1;
-    end if;
-    v_map := v_map || jsonb_build_object(r->>'key', v_id);
-  end loop;
+  -- ① بالرقم القومي
+  update t_stu t set pid = s.id
+    from public.students s
+   where t.nid is not null
+     and regexp_replace(coalesce(s.national_id,''), '\D', '', 'g') = t.nid;
+
+  -- ② بالكود: صف غير مأخوذ، ورقمه القومي فارغ أو مطابق
+  update t_stu t set pid = s.id
+    from public.students s
+   where t.pid is null
+     and s.student_code = t.code
+     and not exists (select 1 from t_stu u where u.pid = s.id)
+     and (t.nid is null
+          or nullif(regexp_replace(coalesce(s.national_id,''), '\D', '', 'g'), '') is null
+          or regexp_replace(s.national_id, '\D', '', 'g') = t.nid);
+
+  -- ③ أكواد السيستم المحجوزة على المنصة بصفوف لا تخص أحدًا في هذه المزامنة
+  update public.students s
+     set student_code = s.student_code || '~' || left(s.id::text, 8)
+   where s.student_code in (select code from t_stu)
+     and not exists (select 1 from t_stu u where u.pid = s.id);
+  get diagnostics v_stale = row_count;
+  if v_stale > 0 then
+    v_warn := v_warn || jsonb_build_object('type','warning','message',
+      'سجلات قديمة على المنصة (' || v_stale || ') كانت تحمل أكواد طلاب في السيستم — نُقلت جانبًا وأُعطي كل كود لصاحبه');
+  end if;
+
+  -- الأكواد إلى قيمة مؤقتة فريدة ثم إلى قيمتها النهائية (يمنع تعارض التبديل)
+  update public.students s set student_code = '~sync~' || s.id::text
+    from t_stu t where t.pid = s.id and s.student_code <> t.code;
+
+  update public.students s set
+    student_code      = t.code,
+    national_id       = coalesce(t.nid, s.national_id),
+    full_name         = coalesce(nullif(trim(t.j->>'full_name'),''), s.full_name),
+    grade_id          = nullif(t.j->>'grade_id','')::smallint,
+    specialization_id = (select id from public.specializations where slug = t.j->>'spec_slug'),
+    class_label       = nullif(t.j->>'class_label',''),
+    guardian_name     = nullif(t.j->>'guardian_name',''),
+    guardian_phone    = nullif(t.j->>'guardian_phone',''),
+    academic_year     = v_year,
+    status            = coalesce(nullif(t.j->>'status',''), 'active')
+    from t_stu t where t.pid = s.id;
+  get diagnostics v_upd = row_count;
+
+  with ins as (
+    insert into public.students(student_code, national_id, full_name, grade_id, specialization_id,
+                                class_label, guardian_name, guardian_phone, academic_year, status)
+    select t.code, t.nid, coalesce(nullif(trim(t.j->>'full_name'),''), '—'),
+           nullif(t.j->>'grade_id','')::smallint,
+           (select id from public.specializations where slug = t.j->>'spec_slug'),
+           nullif(t.j->>'class_label',''), nullif(t.j->>'guardian_name',''),
+           nullif(t.j->>'guardian_phone',''), v_year, coalesce(nullif(t.j->>'status',''), 'active')
+      from t_stu t where t.pid is null
+    returning id, student_code
+  )
+  update t_stu t set pid = ins.id from ins where ins.student_code = t.code and t.pid is null;
+  select count(*) into v_ins from t_stu t
+   where exists (select 1 from public.students s where s.id = t.pid and s.created_at >= now());
+
+  select coalesce(jsonb_object_agg(key, pid), '{}'::jsonb) into v_map from t_stu where pid is not null;
 
   select coalesce(array_agg(value::text::uuid), '{}') into v_ids
     from jsonb_each_text(v_map);
