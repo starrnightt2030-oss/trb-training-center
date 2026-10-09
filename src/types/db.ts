@@ -218,7 +218,7 @@ export interface ParentPortalResult {
   error?: 'disabled' | 'missing_identifier' | 'both_required' | 'too_many_attempts' | 'not_found';
   student?: {
     full_name: string; student_code: string; grade: string | null;
-    specialization: string | null; academic_year: string | null;
+    specialization: string | null; class_label?: string | null; academic_year: string | null;
     status: string; guardian_name: string | null;
   };
   attendance?: {
@@ -226,6 +226,20 @@ export interface ParentPortalResult {
     attendance_pct: number | null; absence_pct: number | null; last_updated: string | null;
   };
   absences?: Array<{ date: string; status: AttendanceStatus; section: string | null; reason: string | null }>;
+  conduct?: ConductRecord[];
+}
+
+/** سجل من الموقف الانضباطي — يُرفع من سيستم المركز بعد اعتماد القرار وتنفيذه */
+export interface ConductRecord {
+  kind: 'first_degree' | 'sanction' | 'absence_warning' | 'absence_dismissal';
+  event_date: string;
+  title: string;
+  action: string | null;
+  degree: number | null;
+  period_from: string | null;
+  period_to: string | null;
+  state: string | null;
+  appeal: string | null;
 }
 
 export interface ImportResult {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarX2, IdCard, LogOut, ShieldCheck, TrendingDown, TrendingUp, UserRound } from 'lucide-react';
+import { CalendarX2, IdCard, LogOut, Scale, ShieldAlert, ShieldCheck, TrendingDown, TrendingUp, UserRound } from 'lucide-react';
 import clsx from 'clsx';
 import { PageHeader } from './PageHeader';
 import { Input } from '@/components/ui/Field';
@@ -11,7 +11,7 @@ import { ATTENDANCE_STATUS } from '@/lib/constants';
 import { formatDateShort, formatDateTime, formatNumber, formatPercent } from '@/lib/format';
 import { useSetting, useSettingBool } from '@/hooks/useSettings';
 import { useSeo } from '@/hooks/useSeo';
-import type { ParentPortalResult } from '@/types/db';
+import type { ConductRecord, ParentPortalResult } from '@/types/db';
 
 const ERRORS: Record<string, string> = {
   disabled:           'بوابة ولي الأمر متوقفة مؤقتاً. يُرجى التواصل مع إدارة شئون الطلاب.',
@@ -20,6 +20,46 @@ const ERRORS: Record<string, string> = {
   too_many_attempts:  'تم تجاوز عدد المحاولات المسموح بها. حاول مرة أخرى بعد 15 دقيقة.',
   not_found:          'لم يُعثر على طالب مطابق للبيانات المُدخلة. تأكد من الكود والرقم القومي، أو راجع إدارة شئون الطلاب.',
 };
+
+/** حالة قيد الطالب كما تأتي من سيستم المركز */
+const STUDENT_STATUS: Record<string, string> = {
+  active: 'منتظم', suspended: 'موقوف', dismissed: 'مفصول', withdrawn: 'مسحوب الملف',
+  dropout: 'منقطع', graduated: 'خريج',
+};
+
+const CONDUCT_KIND: Record<ConductRecord['kind'], { label: string; tone: string }> = {
+  first_degree:      { label: 'مخالفة سلوكية',      tone: 'border-brass-200 bg-brass-50 text-brass-800' },
+  sanction:          { label: 'جزاء تأديبي',         tone: 'border-ember-200 bg-ember-50 text-ember-800' },
+  absence_warning:   { label: 'إنذار غياب',          tone: 'border-brass-200 bg-brass-50 text-brass-800' },
+  absence_dismissal: { label: 'فصل بسبب الغياب',     tone: 'border-ember-200 bg-ember-50 text-ember-800' },
+};
+const DEGREE = ['', 'الدرجة الأولى', 'الدرجة الثانية', 'الدرجة الثالثة'];
+
+/** سجل واحد من الموقف الانضباطي — بطاقة تُقرأ على الهاتف بلا تمرير أفقي */
+function ConductItem({ c }: { c: ConductRecord }) {
+  const k = CONDUCT_KIND[c.kind] ?? { label: c.kind, tone: 'border-steel-200 bg-steel-50 text-ink' };
+  const period = c.period_from && c.period_to && c.period_from !== c.period_to
+    ? `من ${formatDateShort(c.period_from)} إلى ${formatDateShort(c.period_to)}`
+    : c.period_from && c.kind === 'sanction' ? formatDateShort(c.period_from) : null;
+  return (
+    <li className="rounded-2xl border border-steel-200 bg-surface p-5">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className={clsx('rounded-full border px-2.5 py-0.5 text-[12px] font-bold', k.tone)}>{k.label}</span>
+        {c.degree ? <span className="text-[12px] font-semibold text-steel-500">{DEGREE[c.degree] ?? ''}</span> : null}
+        <span className="ms-auto text-[13px] font-semibold text-steel-600">{formatDateShort(c.event_date)}</span>
+      </div>
+      <p className="text-[15.5px] font-bold text-ink">{c.title}</p>
+      {c.action && <p className="mt-1 text-[14px] leading-7 text-steel-700">{c.action}</p>}
+      {(period || c.state || c.appeal) && (
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-steel-600">
+          {period && <span>المدة: <b className="text-ink">{period}</b></span>}
+          {c.state && <span>الحالة: <b className="text-ink">{c.state}</b></span>}
+          {c.appeal && <span>التظلّم: <b className="text-ink">{c.appeal}</b></span>}
+        </div>
+      )}
+    </li>
+  );
+}
 
 /** بطاقة رقم كبيرة وواضحة — الواجهة مصممة لتكون بسيطة جداً لولي الأمر */
 function StatCard({ label, value, tone, icon: Icon }: {
@@ -35,7 +75,7 @@ function StatCard({ label, value, tone, icon: Icon }: {
 }
 
 export default function ParentPortal() {
-  useSeo({ title: 'بوابة ولي الأمر', description: 'متابعة حضور الطالب وغيابه.', noIndex: true });
+  useSeo({ title: 'بوابة ولي الأمر', description: 'متابعة حضور الطالب وغيابه وموقفه الانضباطي.', noIndex: true });
 
   const enabled     = useSettingBool('parent_portal.enabled', true);
   const requireBoth = useSettingBool('parent_portal.require_both', true);
@@ -77,7 +117,7 @@ export default function ParentPortal() {
     return (
       <>
         <PageHeader title={s.full_name} breadcrumb={[{ label: 'بوابة ولي الأمر', to: '/parent' }, { label: 'بيانات الطالب' }]}
-          description="بيانات الحضور والغياب مستخرجة من سجلات إدارة شئون الطلاب."
+          description="بيانات الحضور والغياب والموقف الانضباطي مستخرجة من سيستم إدارة مركز التدريب."
           action={
             <Button variant="secondary" onClick={logout} icon={<LogOut className="h-4 w-4" />}>خروج</Button>
           } />
@@ -96,9 +136,10 @@ export default function ParentPortal() {
                 { k: 'كود الطالب', v: s.student_code },
                 { k: 'الصف', v: s.grade ?? '—' },
                 { k: 'التخصص', v: s.specialization ?? '—' },
+                ...(s.class_label && s.class_label !== s.specialization ? [{ k: 'المجموعة', v: s.class_label }] : []),
                 { k: 'العام الدراسي', v: s.academic_year ?? '—' },
                 { k: 'اسم ولي الأمر', v: s.guardian_name ?? '—' },
-                { k: 'حالة القيد', v: s.status === 'active' ? 'مقيَّد' : s.status },
+                { k: 'حالة الطالب', v: STUDENT_STATUS[s.status] ?? s.status },
               ].map((f) => (
                 <div key={f.k} className="bg-surface p-5">
                   <dt className="text-[12.5px] font-bold text-steel-500">{f.k}</dt>
@@ -182,6 +223,28 @@ export default function ParentPortal() {
             )}
           </section>
 
+          {/* الموقف الانضباطي */}
+          <section>
+            <h2 className="mb-4 flex items-center gap-2 text-[18px]">
+              <Scale className="h-5 w-5 text-accent" aria-hidden /> الموقف الانضباطي
+            </h2>
+            {data.conduct?.length ? (
+              <>
+                <ul className="space-y-3">
+                  {data.conduct.map((c, i) => <ConductItem key={`${c.kind}-${c.event_date}-${i}`} c={c} />)}
+                </ul>
+                <p className="mt-3 flex items-start gap-2 text-[12.5px] leading-6 text-steel-500">
+                  <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  تظهر هنا القرارات المعتمدة فقط. ولولي الأمر حق التظلّم من أي جزاء خلال المدة المقررة
+                  بطلب مكتوب لإدارة شئون الطلاب، أو عبر صفحة الشكاوى والمقترحات.
+                </p>
+              </>
+            ) : (
+              <EmptyState title="لا توجد مخالفات أو جزاءات مسجَّلة"
+                description="سجل الطالب الانضباطي خالٍ حتى تاريخه." />
+            )}
+          </section>
+
           {note && <p className="rounded-xl bg-steel-100 px-5 py-4 text-[13.5px] leading-7 text-steel-600">{note}</p>}
         </div>
       </>
@@ -192,7 +255,7 @@ export default function ParentPortal() {
   return (
     <>
       <PageHeader title="بوابة ولي الأمر" breadcrumb={[{ label: 'بوابة ولي الأمر' }]}
-        description="تابع نسبة حضور ابنك وأيام غيابه وسجل التواريخ. البيانات محدَّثة من سجلات إدارة شئون الطلاب." />
+        description="تابع نسبة حضور ابنك وأيام غيابه وسجل التواريخ وموقفه الانضباطي. البيانات محدَّثة من سيستم إدارة مركز التدريب." />
 
       <div className="container-page max-w-xl py-12">
         {!enabled ? (
